@@ -942,11 +942,11 @@ button { touch-action: manipulation; }
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
      knee を置くと、そこを超えたぶん（knee+1g 以降）が step2 になる。 */
   var GRIND = {
-    fast:     { base: 11.1, step: 0.1, knee: 20, step2: 0.05, cap: 13.2 },                    // 高速 / ウェーブ
-    balance:  { base: 11.5, step: 0.1, knee: 20, step2: 0.05, cap: 13.2 },                    // バランス / フラット
-    sibarist: { base: 10.0, step: 0.2, knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
-    z1:       { base: 9.5,  step: 0.3, cap: 99 },                                             // Orea Z1
-    immerse:  { base: 11.5, step: 0.1, knee: 20, step2: 0.05, cap: 13.2, provisional: true }  // ★未指定
+    fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2 },                    // 高速 / ウェーブ
+    balance:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2 },                    // バランス / フラット
+    sibarist: { base: 10.0, step: 0.2,  knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
+    z1:       { base: 9.5,  step: 0.35, cap: 99 },                                             // Orea Z1
+    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2, provisional: true }  // ★未指定
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
@@ -1077,7 +1077,9 @@ button { touch-action: manipulation; }
   }
 
   /* 10g を起点に 1g ごとに step、cap で頭打ち。
-     knee 以降は step2 に切り替わる（2段勾配）。 */
+     knee 以降は step2 に切り替わる（2段勾配）。
+     表示は小数第1位まで。0.35 のような刻みは浮動小数の誤差が乗って
+     四捨五入の向きが変わるので、一度小数第2位で均してから丸める。 */
   function ramp(t, beans) {
     var v = t.base;
     if (t.knee != null) {
@@ -1086,7 +1088,7 @@ button { touch-action: manipulation; }
     } else {
       v += (beans - 10) * t.step;
     }
-    return round1(Math.min(t.cap, v));
+    return round1(Math.round(Math.min(t.cap, v) * 100) / 100);
   }
 
   function ratioFor(cat, beans, iced) {
