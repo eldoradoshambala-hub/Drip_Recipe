@@ -935,18 +935,18 @@ button { touch-action: manipulation; }
   /* ブリューレシオ：10g を起点に 1g ごとに step ずつ増やし、cap で頭打ち */
   var RATIO = {
     hot: { base: 15.5, step: 0.1, cap: 16.5 },
-    ice: { base: 15.2, step: 0.1, cap: 16.2 },
+    ice: { base: 15.2, step: 0.1, cap: 16.0 },
     z1:  { base: 15.0, step: 0.2, cap: 16.0 }
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
      knee を置くと、そこを超えたぶん（knee+1g 以降）が step2 になる。 */
   var GRIND = {
-    fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2 },                    // 高速 / ウェーブ
-    balance:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2 },                    // バランス / フラット
+    fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // 高速 / ウェーブ
+    balance:  { base: 11.3, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // バランス / フラット
     sibarist: { base: 10.0, step: 0.2,  knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
     z1:       { base: 9.5,  step: 0.35, cap: 99 },                                             // Orea Z1
-    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.2, provisional: true }  // ★未指定
+    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0, provisional: true }  // ★未指定
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
