@@ -691,6 +691,11 @@ button { touch-action: manipulation; }
 .track { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
 .track i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .25s ease; }
 
+/* SWITCH 開閉カード：注湯カードと見分けがつくよう accent で塗る */
+.pour.switch-card { background: var(--accent-soft); border-color: var(--accent); }
+.switch-badge { background: var(--accent); color: var(--on-accent); }
+.switch-time { font-size: 22px; }
+
 .total-line {
   display: flex;
   align-items: baseline;
@@ -715,6 +720,8 @@ button { touch-action: manipulation; }
   line-height: 1.55;
   color: var(--ink-2);
 }
+/* display:flex が [hidden] の既定 display:none を上書きしてしまうため明示する */
+.notice[hidden] { display: none; }
 .notice .k {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -913,8 +920,7 @@ button { touch-action: manipulation; }
      どのルールを使うかを指す。3つのグループ分けは互いに独立している。
      *Prov = そのルールがまだ未指定で仮置きであることの印。 */
   var CATEGORIES = [
-    { id: 'immerse',      label: '浸漬系',             split: 'immerse', grind: 'immerse',  timing: 'A',
-      splitProv: true, timingProv: true },
+    { id: 'immerse',      label: '浸漬系',             split: 'immerse', grind: 'immerse' },
     { id: 'cone-fast',    label: '高速ドリッパー',      split: 'cone',    grind: 'fast',     timing: 'A' },
     { id: 'cone-balance', label: 'バランスドリッパー',   split: 'cone',    grind: 'balance',  timing: 'A' },
     { id: 'cone-sib',     label: 'Sibarist（円錐）',    split: 'cone',    grind: 'sibarist', timing: 'B' },
@@ -928,7 +934,7 @@ button { touch-action: manipulation; }
   var SPLITS = {
     cone:    { 4: [20, 30, 25, 25], 5: [20, 25, 20, 20, 15] },
     flat:    { 4: [25, 25, 25, 25], 5: [20, 20, 20, 20, 20] },
-    immerse: { 4: [20, 30, 25, 25], 5: [20, 25, 20, 20, 15] },  /* ★仮：円錐と同じ配分 */
+    immerse: { 3: [20, 40, 40] },   /* SWITCH：3投固定 */
     z1:      { 4: [20, 40, 25, 15] }
   };
 
@@ -946,7 +952,7 @@ button { touch-action: manipulation; }
     balance:  { base: 11.3, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // バランス / フラット
     sibarist: { base: 10.0, step: 0.2,  knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
     z1:       { base: 9.5,  step: 0.35, cap: 99 },                                             // Orea Z1
-    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0, provisional: true }  // ★未指定
+    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 }                     // SWITCH（balance と同じ傾き）
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
@@ -956,6 +962,18 @@ button { touch-action: manipulation; }
     B: { 4: [0, 30, 60,  90], 5: [0, 30, 60, 80, 100] }   // ウェーブ / Sibarist（円錐・フラット）
   };
   var TIMING_TIER = 5;   // 豆量帯ごとの加算秒
+
+  /* SWITCH（浸漬系）の固定スケジュール：3投固定、スイッチの開閉と連動。豆量による調整はない。
+     閉じる(0:00) → 1投目(0:00) → 開放(0:30) → 2投目(0:40) → 閉じる(1:30) → 3投目(1:30) → 開放(2:30) */
+  var SWITCH_SCHEDULE = {
+    pours: [0, 40, 90],
+    events: [
+      { t: 0,   action: 'close' },
+      { t: 30,  action: 'open'  },
+      { t: 90,  action: 'close' },
+      { t: 150, action: 'open'  }
+    ]
+  };
 
   /* 落ちきり目標（秒）。分類によらず豆量帯だけで決まる。 */
   var DRAWDOWN = [
@@ -1101,6 +1119,7 @@ button { touch-action: manipulation; }
   function timingTier(beans)   { return beans < 21 ? 0 : 1; }                     // 10〜20 / 21〜
 
   function timesFor(cat, n, beans) {
+    if (cat.split === 'immerse') return SWITCH_SCHEDULE.pours.slice();
     var base = (TIMING[cat.timing] || TIMING.A)[n];
     if (!base) return null;
     var add = timingTier(beans) * TIMING_TIER;
@@ -1121,7 +1140,7 @@ button { touch-action: manipulation; }
   function buildRecipe(inp) {
     var cat = resolveCategory(inp);
     var iced = inp.brew === 'ice';
-    var n = cat.split === 'z1' ? Z1.pours : inp.pours;
+    var n = cat.split === 'z1' ? Z1.pours : (cat.split === 'immerse' ? 3 : inp.pours);
     var water = Math.round(inp.beans * ratioFor(cat, inp.beans, iced));
 
     return {
@@ -1447,10 +1466,12 @@ button { touch-action: manipulation; }
     rows.appendChild(paramRow('湯温', 'Temperature', tempReadout(recipe)));
 
     rows.appendChild(paramRow('投数', 'Pours',
-      segTwo([
-        { v: 4, label: '4投', disabled: !poursUsable(4) },
-        { v: 5, label: '5投', disabled: !poursUsable(5) }
-      ], recipe.pours.length, setPourCount)));
+      cat.split === 'immerse'
+        ? fixedValue('3投（固定）')
+        : segTwo([
+            { v: 4, label: '4投', disabled: !poursUsable(4) },
+            { v: 5, label: '5投', disabled: !poursUsable(5) }
+          ], recipe.pours.length, setPourCount)));
 
     rows.appendChild(paramRow('挽き目', 'Varia VS6 · Kilonova DLC',
       fixedValue(recipe.grind.toFixed(1))));
@@ -1464,7 +1485,7 @@ button { touch-action: manipulation; }
     list.innerHTML = '';
     var cum = 0;
 
-    recipe.pours.forEach(function (pour, i) {
+    function appendPourCard(pour, i) {
       cum += pour.w;
       var cumNow = cum;
       var card = el('div', 'pour');
@@ -1518,7 +1539,33 @@ button { touch-action: manipulation; }
       card.appendChild(track);
 
       list.appendChild(card);
-    });
+    }
+
+    /* SWITCH の開閉操作カード（注湯とは別に、手順として時系列に挿入する） */
+    function appendSwitchCard(action, t) {
+      var card = el('div', 'pour switch-card');
+      var top = el('div', 'pour-top');
+      top.appendChild(el('span', 'badge switch-badge', action === 'close' ? '閉' : '開'));
+      top.appendChild(el('span', 'name', 'SWITCH を' + (action === 'close' ? '閉じる' : '開放')));
+      top.appendChild(el('span', 'spacer'));
+      top.appendChild(el('span', 'cum-k', '経過'));
+      top.appendChild(el('span', 'cum-v switch-time', mmss(t)));
+      card.appendChild(top);
+      list.appendChild(card);
+    }
+
+    if (cat.split === 'immerse') {
+      var ev = SWITCH_SCHEDULE.events;
+      appendSwitchCard('close', ev[0].t);
+      appendPourCard(recipe.pours[0], 0);
+      appendSwitchCard('open', ev[1].t);
+      appendPourCard(recipe.pours[1], 1);
+      appendSwitchCard('close', ev[2].t);
+      appendPourCard(recipe.pours[2], 2);
+      appendSwitchCard('open', ev[3].t);
+    } else {
+      recipe.pours.forEach(appendPourCard);
+    }
 
     $('#pour-total').textContent = water + ' g';
 
