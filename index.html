@@ -735,6 +735,111 @@ button { touch-action: manipulation; }
   letter-spacing: .08em;
 }
 
+/* ---------- numbers (screen 3) ---------- */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+.tbl th, .tbl td {
+  padding: 7px 8px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+.tbl thead th {
+  border-top: 0;
+  padding-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: var(--ink-3);
+}
+.tbl .rowhead {
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.tbl thead .rowhead { font-family: var(--font-num); }
+.tbl .grouphead td {
+  text-align: left;
+  padding: 9px 8px 6px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.tbl td.na { color: var(--ink-3); }
+.tbl tbody tr:last-child td, .tbl tbody tr:last-child th { padding-bottom: 11px; }
+
+/* 数値エディタ：1ブロック＝1ルール、その中に小さな数値入力が並ぶ */
+.tune { padding: 11px 12px 12px; border-top: 1px solid var(--line); }
+.tune:first-child { border-top: 0; }
+.tune-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.tune-head b { font-size: 16px; font-weight: 600; }
+.tune-sum {
+  margin-left: auto;
+  font-family: var(--font-num);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.tune-sum.bad { color: var(--hot-text); font-weight: 700; }
+.tune-fields { display: flex; flex-wrap: wrap; gap: 8px; }
+.fld { display: flex; flex-direction: column; gap: 3px; }
+.fld > span {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+}
+.fld input {
+  width: 76px;
+  height: 40px;
+  padding: 0 9px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--ink);
+  -moz-appearance: textfield;
+}
+.fld input::-webkit-outer-spin-button,
+.fld input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.fld input:focus { outline: none; border-color: var(--accent); color: var(--accent-text); }
+.fld input[disabled] { opacity: .45; }
+
+/* 書き出し */
+.export-code {
+  display: block;
+  width: 100%;
+  height: 168px;
+  margin-top: 2px;
+  padding: 9px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+  -webkit-text-size-adjust: 100%;
+}
+.export-code:focus { outline: none; border-color: var(--accent); }
+.export-actions { display: flex; gap: 7px; margin-top: 9px; }
+.export-actions .chip { flex: 1; text-align: center; font-size: 16px; }
+
 /* ---------- a11y ---------- */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) {
@@ -748,6 +853,7 @@ button { touch-action: manipulation; }
   <header class="topbar">
     <h1>ドリップレシピ<span class="sub" id="crumb">Setup</span></h1>
     <button class="bar-btn" id="btn-reset" hidden>リセット</button>
+    <button class="bar-btn" id="btn-numbers">数値</button>
   </header>
 
   <div class="screens">
@@ -860,6 +966,46 @@ button { touch-action: manipulation; }
       </div>
     </section>
 
+    <!-- ============ 3. NUMBERS ============ -->
+    <section class="screen" id="screen-settings" aria-label="数値の調整">
+      <div class="scroll">
+
+        <div class="sec">
+          <div class="sec-head"><h2>Preview</h2><span class="jp">豆量別の早見表</span></div>
+          <div class="card"><div class="tbl-wrap" id="num-table"></div></div>
+          <p class="sec-note">下の数値を変えると、この表と画面2のレシピにすぐ反映されます。
+            変更はこのブラウザに保存されます。</p>
+        </div>
+
+        <div id="tune-groups"></div>
+
+        <div class="sec">
+          <div class="sec-head"><h2>Export</h2><span class="jp">コードとして書き出す</span></div>
+          <div class="card">
+            <div class="tune">
+              <div class="tune-head">
+                <b>初期設定からの変更</b>
+                <span class="tune-sum" id="export-status"></span>
+              </div>
+              <textarea class="export-code" id="export-code" readonly wrap="off"
+                aria-label="書き出したコード"></textarea>
+              <div class="export-actions">
+                <button type="button" class="chip" id="btn-export-copy">コピー</button>
+                <button type="button" class="chip" id="btn-export-share" hidden>共有</button>
+              </div>
+            </div>
+          </div>
+          <p class="sec-note">index.html の該当する var 宣言をこの内容で置き換えると、
+            端末に依存せず数値が残ります。</p>
+        </div>
+
+      </div>
+      <div class="footer">
+        <button class="cta secondary" id="btn-tune-reset">初期設定に戻す</button>
+        <button class="cta" id="btn-back3">戻る</button>
+      </div>
+    </section>
+
   </div>
 </div>
 </div>
@@ -961,7 +1107,6 @@ button { touch-action: manipulation; }
     A: { 4: [0, 30, 65, 100], 5: [0, 30, 60, 85, 105] },  // フラット / 高速 / バランス / Z1
     B: { 4: [0, 30, 60,  90], 5: [0, 30, 60, 80, 100] }   // ウェーブ / Sibarist（円錐・フラット）
   };
-  var TIMING_TIER = 5;   // 豆量帯ごとの加算秒
 
   /* SWITCH（浸漬系）の固定スケジュール：3投固定、スイッチの開閉と連動。豆量による調整はない。
      閉じる(0:00) → 1投目(0:00) → 開放(0:30) → 2投目(0:40) → 閉じる(1:30) → 3投目(1:30) → 開放(2:30) */
@@ -983,7 +1128,8 @@ button { touch-action: manipulation; }
   ];
 
   var RULES = {
-    paragonTempBonus: 2    // パラゴン使用時の湯温加算
+    paragonTempBonus: 2,   // パラゴン使用時の湯温加算
+    timingTier: 5          // 豆量帯ごとの注湯時間の加算秒
   };
 
   /* Orea Z1 の制約：豆量 10〜15g / 4投のみ / ホットのみ */
@@ -1122,7 +1268,7 @@ button { touch-action: manipulation; }
     if (cat.split === 'immerse') return SWITCH_SCHEDULE.pours.slice();
     var base = (TIMING[cat.timing] || TIMING.A)[n];
     if (!base) return null;
-    var add = timingTier(beans) * TIMING_TIER;
+    var add = timingTier(beans) * RULES.timingTier;
     return base.map(function (t, i) { return i === 0 ? 0 : t + add; });
   }
 
@@ -1583,19 +1729,355 @@ button { touch-action: manipulation; }
   }
 
   /* ==========================================================
+     NUMBERS SCREEN（画面3）
+     spec が持つ ref は各定数オブジェクトそのものへの参照なので、
+     ref[key] を書き換えるとレシピ計算にそのまま効く。
+     ========================================================== */
+  var TABLE_DOSES = [10, 15, 20, 30];
+  var TUNE_STORE = 'drip-recipe/tuning-v1';
+
+  /* 編集・保存の対象。ここに挙げたものだけが復元/リセットされる。 */
+  function tuningModel() {
+    return {
+      RATIO: RATIO, GRIND: GRIND, SPLITS: SPLITS, TIMING: TIMING,
+      SWITCH_SCHEDULE: SWITCH_SCHEDULE, DRAWDOWN: DRAWDOWN, RULES: RULES
+    };
+  }
+  var TUNING_DEFAULTS = JSON.parse(JSON.stringify(tuningModel()));
+
+  /* dst に元からあるキーだけを、型が一致するときだけ上書きする。
+     壊れた保存値や余計なキーがモデルに入り込まないようにするため。 */
+  function assignDeep(dst, src) {
+    if (!src || typeof src !== 'object') return;
+    Object.keys(dst).forEach(function (k) {
+      if (!(k in src)) return;
+      if (dst[k] && typeof dst[k] === 'object') assignDeep(dst[k], src[k]);
+      else if (typeof src[k] === typeof dst[k]) dst[k] = src[k];
+    });
+  }
+
+  function saveTuning() {
+    try { localStorage.setItem(TUNE_STORE, JSON.stringify(tuningModel())); } catch (e) {}
+  }
+  function loadTuning() {
+    try {
+      var raw = localStorage.getItem(TUNE_STORE);
+      if (raw) assignDeep(tuningModel(), JSON.parse(raw));
+    } catch (e) {}
+  }
+  function resetTuning() {
+    assignDeep(tuningModel(), JSON.parse(JSON.stringify(TUNING_DEFAULTS)));
+    try { localStorage.removeItem(TUNE_STORE); } catch (e) {}
+  }
+
+  /* --- 入力欄の定義 --- */
+  function fld(key, label, min, max, step) {
+    return { key: key, label: label, min: min, max: max, step: step };
+  }
+  var RAMP_FIELD = {
+    base:  function () { return fld('base',  '10g時',     1,  40, 0.1);  },
+    step:  function () { return fld('step',  '＋/1g',     0,  2,  0.01); },
+    knee:  function () { return fld('knee',  '切替g',     10, 40, 1);    },
+    step2: function () { return fld('step2', '切替後/1g', 0,  2,  0.01); },
+    cap:   function () { return fld('cap',   '上限',      1,  99, 0.1);  }
+  };
+  function rampFields(keys) { return keys.map(function (k) { return RAMP_FIELD[k](); }); }
+  function secFields(arr, lockFirst) {
+    return arr.map(function (_, i) {
+      var f = fld(i, (i + 1) + '投目', 0, 1200, 5);
+      f.disabled = !!lockFirst && i === 0;   // 1投目は常に 0:00
+      return f;
+    });
+  }
+  function pctFields(arr) {
+    return arr.map(function (_, i) { return fld(i, (i + 1) + '投目', 0, 100, 1); });
+  }
+  function drawdownFields() {
+    return [fld('min', '最短(秒)', 0, 900, 5), fld('max', '最長(秒)', 0, 900, 5)];
+  }
+
+  function tuningGroups() {
+    return [
+      { label: 'ブリューレシオ', sub: 'Brew Ratio',
+        note: '10g を起点に 1g ごとに増え、上限で頭打ちになります。',
+        rows: [
+          { label: 'ホット',  ref: RATIO.hot, fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'アイス',  ref: RATIO.ice, fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'Orea Z1', ref: RATIO.z1,  fields: rampFields(['base', 'step', 'cap']) }
+        ] },
+
+      { label: '挽き目', sub: 'Grind',
+        note: '切替g までは ＋/1g、それを超えたぶんは 切替後/1g で増えます。',
+        rows: [
+          { label: '高速 / ウェーブ',           ref: GRIND.fast,     fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
+          { label: 'バランス / フラット',        ref: GRIND.balance,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
+          { label: 'Sibarist（円錐・フラット）', ref: GRIND.sibarist, fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
+          { label: 'Orea Z1',                  ref: GRIND.z1,       fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'SWITCH（浸漬系）',          ref: GRIND.immerse,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) }
+        ] },
+
+      { label: '注湯の配分', sub: 'Split',
+        note: '各投の配分％。合計が 100% になるようにしてください。',
+        rows: [
+          { label: '円錐 · 4投',    ref: SPLITS.cone[4],    fields: pctFields(SPLITS.cone[4]),    sum: true },
+          { label: '円錐 · 5投',    ref: SPLITS.cone[5],    fields: pctFields(SPLITS.cone[5]),    sum: true },
+          { label: '平底 · 4投',    ref: SPLITS.flat[4],    fields: pctFields(SPLITS.flat[4]),    sum: true },
+          { label: '平底 · 5投',    ref: SPLITS.flat[5],    fields: pctFields(SPLITS.flat[5]),    sum: true },
+          { label: 'SWITCH · 3投',  ref: SPLITS.immerse[3], fields: pctFields(SPLITS.immerse[3]), sum: true },
+          { label: 'Orea Z1 · 4投', ref: SPLITS.z1[4],      fields: pctFields(SPLITS.z1[4]),      sum: true }
+        ] },
+
+      { label: '注湯時間', sub: 'Pour Timing',
+        note: 'スタートからの累計秒。1投目は常に 0:00 なので変更できません。',
+        rows: [
+          { label: 'A · 4投（フラット/高速/バランス/Z1）', ref: TIMING.A[4], fields: secFields(TIMING.A[4], true) },
+          { label: 'A · 5投',                            ref: TIMING.A[5], fields: secFields(TIMING.A[5], true) },
+          { label: 'B · 4投（ウェーブ/Sibarist）',        ref: TIMING.B[4], fields: secFields(TIMING.B[4], true) },
+          { label: 'B · 5投',                            ref: TIMING.B[5], fields: secFields(TIMING.B[5], true) }
+        ] },
+
+      { label: 'SWITCH スケジュール', sub: 'Immersion',
+        note: '3投固定。豆量による加算はかかりません（秒）。',
+        rows: [
+          { label: '注湯', ref: SWITCH_SCHEDULE.pours, fields: secFields(SWITCH_SCHEDULE.pours, false) },
+          { label: 'スイッチ操作',
+            fields: SWITCH_SCHEDULE.events.map(function (e, i) {
+              var f = fld('t', (i + 1) + '. ' + (e.action === 'close' ? '閉じる' : '開放'), 0, 1200, 5);
+              f.ref = e;
+              return f;
+            }) }
+        ] },
+
+      { label: '落ちきり目標', sub: 'Drawdown',
+        note: '豆量帯ごとの目標秒数。',
+        rows: [
+          { label: '10〜15g', ref: DRAWDOWN[0], fields: drawdownFields() },
+          { label: '16〜20g', ref: DRAWDOWN[1], fields: drawdownFields() },
+          { label: '21g以降', ref: DRAWDOWN[2], fields: drawdownFields() }
+        ] },
+
+      { label: 'その他', sub: 'Misc',
+        rows: [
+          { label: 'パラゴン加算',   ref: RULES, fields: [fld('paragonTempBonus', '℃', 0, 10, 1)] },
+          { label: '21g以降の加算', ref: RULES, fields: [fld('timingTier', '秒', 0, 60, 5)] }
+        ] }
+    ];
+  }
+
+  /* --- 描画 --- */
+  var sumWatchers = [];
+
+  function onTuningChange() {
+    saveTuning();
+    renderNumbersTable();
+    renderExport();
+    sumWatchers.forEach(function (w) { w(); });
+    if (recipe) rebuild();   // 画面2を開いたあとならルール変更を反映し直す
+  }
+
+  function tuneField(field, rowRef) {
+    var ref = field.ref || rowRef;
+    var wrap = el('label', 'fld');
+    wrap.appendChild(el('span', null, field.label));
+    var inp = document.createElement('input');
+    inp.type = 'number';
+    inp.inputMode = 'decimal';
+    inp.step = String(field.step);
+    inp.min = String(field.min);
+    inp.max = String(field.max);
+    inp.value = String(ref[field.key]);
+    inp.disabled = !!field.disabled;
+    inp.addEventListener('change', function () {
+      var v = parseFloat(inp.value);
+      if (isNaN(v)) { inp.value = String(ref[field.key]); return; }
+      v = Math.round(clamp(v, field.min, field.max) * 1000) / 1000;
+      ref[field.key] = v;
+      inp.value = String(v);
+      onTuningChange();
+    });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function renderTuning() {
+    var host = $('#tune-groups');
+    host.innerHTML = '';
+    sumWatchers = [];
+
+    tuningGroups().forEach(function (g) {
+      var sec = el('div', 'sec');
+      var head = el('div', 'sec-head');
+      head.appendChild(el('h2', null, g.sub));
+      head.appendChild(el('span', 'jp', g.label));
+      sec.appendChild(head);
+
+      var card = el('div', 'card');
+      g.rows.forEach(function (row) {
+        var block = el('div', 'tune');
+
+        var top = el('div', 'tune-head');
+        top.appendChild(el('b', null, row.label));
+        if (row.sum) {
+          var badge = el('span', 'tune-sum');
+          var update = (function (ref, node) {
+            return function () {
+              var total = ref.reduce(function (a, b) { return a + b; }, 0);
+              node.textContent = '計 ' + round1(total) + '%';
+              node.classList.toggle('bad', Math.abs(total - 100) > 0.001);
+            };
+          })(row.ref, badge);
+          update();
+          sumWatchers.push(update);
+          top.appendChild(badge);
+        }
+        block.appendChild(top);
+
+        var fields = el('div', 'tune-fields');
+        row.fields.forEach(function (f) { fields.appendChild(tuneField(f, row.ref)); });
+        block.appendChild(fields);
+
+        card.appendChild(block);
+      });
+      sec.appendChild(card);
+      if (g.note) sec.appendChild(el('p', 'sec-note', g.note));
+      host.appendChild(sec);
+    });
+  }
+
+  /* 値を JS のソース断片に整形する。1行に収まるものは1行、長ければ展開する。 */
+  function jsLiteral(v, indent) {
+    if (v === null || typeof v !== 'object') {
+      return typeof v === 'string' ? "'" + v + "'" : String(v);
+    }
+    var pad = new Array(indent + 1).join(' ');
+    var inner = new Array(indent + 3).join(' ');
+    var isArr = Array.isArray(v);
+    var keys = isArr ? v.map(function (_, i) { return i; }) : Object.keys(v);
+    var parts = keys.map(function (k) {
+      var val = jsLiteral(v[k], indent + 2);
+      if (isArr) return val;
+      var name = (/^[A-Za-z_$][\w$]*$/.test(k) || /^\d+$/.test(k)) ? k : "'" + k + "'";
+      return name + ': ' + val;
+    });
+    var oneLine = isArr ? '[' + parts.join(', ') + ']' : '{ ' + parts.join(', ') + ' }';
+    if (oneLine.length + indent <= 78 && oneLine.indexOf('\n') === -1) return oneLine;
+    return (isArr ? '[' : '{') + '\n'
+      + parts.map(function (p) { return inner + p; }).join(',\n')
+      + '\n' + pad + (isArr ? ']' : '}');
+  }
+
+  /* 初期設定と食い違っているコンテナだけを書き出す（丸ごと貼り替えられる単位） */
+  function changedContainers() {
+    var model = tuningModel();
+    return Object.keys(model).filter(function (k) {
+      return JSON.stringify(model[k]) !== JSON.stringify(TUNING_DEFAULTS[k]);
+    });
+  }
+
+  function exportCode() {
+    var model = tuningModel();
+    var changed = changedContainers();
+    if (!changed.length) return '// 初期設定から変更された数値はありません。';
+    return '// ドリップレシピ：画面3で調整した数値（'
+      + new Date().toLocaleDateString('ja-JP') + '）\n'
+      + '// index.html の該当する var 宣言をこの内容で置き換えてください。\n\n'
+      + changed.map(function (k) {
+          return 'var ' + k + ' = ' + jsLiteral(model[k], 0) + ';';
+        }).join('\n\n');
+  }
+
+  function renderExport() {
+    var changed = changedContainers();
+    $('#export-code').value = exportCode();
+    var status = $('#export-status');
+    status.textContent = changed.length ? changed.length + '件' : '変更なし';
+    status.classList.toggle('bad', changed.length > 0);
+  }
+
+  function renderNumbersTable() {
+    var host = $('#num-table');
+    host.innerHTML = '';
+
+    var table = el('table', 'tbl');
+    var thead = el('thead');
+    var hr = el('tr');
+    hr.appendChild(el('th', 'rowhead', '項目'));
+    TABLE_DOSES.forEach(function (d) { hr.appendChild(el('th', null, d + 'g')); });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    var tb = el('tbody');
+    function group(label) {
+      var r = el('tr', 'grouphead');
+      var c = el('td', null, label);
+      c.colSpan = TABLE_DOSES.length + 1;
+      r.appendChild(c);
+      tb.appendChild(r);
+    }
+    function row(label, fn) {
+      var r = el('tr');
+      r.appendChild(el('th', 'rowhead', label));
+      TABLE_DOSES.forEach(function (d) {
+        var v = fn(d);
+        r.appendChild(el('td', v == null ? 'na' : null, v == null ? '—' : String(v)));
+      });
+      tb.appendChild(r);
+    }
+    /* Orea Z1 は 10〜15g 専用なので、範囲外の列は「—」にする */
+    function z1Only(fn) {
+      return function (d) { return (d < Z1.min || d > Z1.max) ? null : fn(d); };
+    }
+
+    group('ブリューレシオ');
+    row('ホット',  function (d) { return ramp(RATIO.hot, d).toFixed(1); });
+    row('アイス',  function (d) { return ramp(RATIO.ice, d).toFixed(1); });
+    row('Orea Z1', z1Only(function (d) { return ramp(RATIO.z1, d).toFixed(1); }));
+
+    group('総湯量');
+    row('ホット',  function (d) { return Math.round(d * ramp(RATIO.hot, d)) + ' g'; });
+    row('アイス',  function (d) { return Math.round(d * ramp(RATIO.ice, d)) + ' g'; });
+    row('Orea Z1', z1Only(function (d) { return Math.round(d * ramp(RATIO.z1, d)) + ' g'; }));
+
+    group('挽き目');
+    row('高速 / ウェーブ',    function (d) { return ramp(GRIND.fast, d).toFixed(1); });
+    row('バランス / フラット', function (d) { return ramp(GRIND.balance, d).toFixed(1); });
+    row('Sibarist',          function (d) { return ramp(GRIND.sibarist, d).toFixed(1); });
+    row('Orea Z1',           z1Only(function (d) { return ramp(GRIND.z1, d).toFixed(1); }));
+    row('SWITCH',            function (d) { return ramp(GRIND.immerse, d).toFixed(1); });
+
+    group('落ちきり目標');
+    row('目標', function (d) {
+      var w = DRAWDOWN[drawdownTier(d)];
+      return mmss(w.min) + '–' + mmss(w.max);
+    });
+
+    group('注湯時間');
+    row('2投目以降の加算', function (d) { return '+' + (timingTier(d) * RULES.timingTier) + '秒'; });
+
+    table.appendChild(tb);
+    host.appendChild(table);
+  }
+
+  /* ==========================================================
      NAVIGATION
      ========================================================== */
-  function show(which) {
-    var inputScreen = $('#screen-input');
-    var recipeScreen = $('#screen-recipe');
-    var toRecipe = which === 'recipe';
-    inputScreen.classList.toggle('is-active', !toRecipe);
-    inputScreen.classList.toggle('is-left', toRecipe);
-    recipeScreen.classList.toggle('is-active', toRecipe);
+  var SCREEN_ORDER = ['input', 'recipe', 'settings'];
+  var CRUMB = { input: 'Setup', recipe: 'Recipe', settings: 'Numbers' };
+  var current = 'input';
 
-    $('#btn-reset').hidden = !toRecipe;
-    $('#crumb').textContent = toRecipe ? 'Recipe' : 'Setup';
-    (toRecipe ? recipeScreen : inputScreen).querySelector('.scroll').scrollTop = 0;
+  function show(which) {
+    var idx = SCREEN_ORDER.indexOf(which);
+    SCREEN_ORDER.forEach(function (name, i) {
+      var sc = $('#screen-' + name);
+      sc.classList.toggle('is-active', i === idx);
+      sc.classList.toggle('is-left', i < idx);
+    });
+
+    $('#btn-reset').hidden = which !== 'recipe';
+    $('#btn-numbers').hidden = which === 'settings';
+    $('#crumb').textContent = CRUMB[which];
+    $('#screen-' + which).querySelector('.scroll').scrollTop = 0;
+    current = which;
   }
 
   $('#btn-go').addEventListener('click', function () {
@@ -1604,6 +2086,86 @@ button { touch-action: manipulation; }
     show('recipe');
   });
   $('#btn-back2').addEventListener('click', function () { renderInput(); show('input'); });
+
+  /* 画面3：数値の調整。戻り先は開いたときの画面を覚えておく。 */
+  var numbersFrom = 'input';
+  $('#btn-numbers').addEventListener('click', function () {
+    numbersFrom = current;
+    renderTuning();
+    renderNumbersTable();
+    renderExport();
+    show('settings');
+  });
+  $('#btn-back3').addEventListener('click', function () {
+    if (numbersFrom === 'recipe' && recipe) show('recipe');
+    else { renderInput(); show('input'); }
+  });
+
+  /* ボタンのラベルを一時的に差し替える */
+  function flashLabel(btn, msg) {
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.textContent = msg;
+    clearTimeout(btn._flash);
+    btn._flash = setTimeout(function () { btn.textContent = btn.dataset.label; }, 1400);
+  }
+
+  /* iOS では readonly のままだと選択できないので、一時的に外してから選ぶ */
+  function selectAllFallback(ta) {
+    ta.removeAttribute('readonly');
+    ta.focus();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.setAttribute('readonly', '');
+    return ok;
+  }
+
+  $('#btn-export-copy').addEventListener('click', function () {
+    var btn = this;
+    var ta = $('#export-code');
+    var done = function () { flashLabel(btn, 'コピーしました'); };
+    var fallback = function () {
+      if (selectAllFallback(ta)) done();
+      else flashLabel(btn, '長押しでコピー');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  /* 共有シートは対応端末でだけ出す（ホーム画面アプリの iOS Safari は対応） */
+  if (navigator.share) $('#btn-export-share').hidden = false;
+  $('#btn-export-share').addEventListener('click', function () {
+    try {
+      var p = navigator.share({ title: 'ドリップレシピの数値', text: $('#export-code').value });
+      if (p && p.catch) p.catch(function () {});   // キャンセルは無視
+    } catch (e) {}
+  });
+
+  /* 初期設定に戻す：取り消せないので2タップ確認にする */
+  var tuneResetArmed = false;
+  $('#btn-tune-reset').addEventListener('click', function () {
+    var b = $('#btn-tune-reset');
+    if (!tuneResetArmed) {
+      tuneResetArmed = true;
+      b.textContent = 'もう一度で確定';
+      setTimeout(function () {
+        if (!tuneResetArmed) return;
+        tuneResetArmed = false;
+        b.textContent = '初期設定に戻す';
+      }, 2500);
+      return;
+    }
+    tuneResetArmed = false;
+    b.textContent = '初期設定に戻す';
+    resetTuning();
+    renderTuning();
+    renderNumbersTable();
+    renderExport();
+    if (recipe) rebuild();
+  });
 
   /* リセット：豆量を画面1の値に、投数を4投に戻し、ルールから組み直す。
      ブリューレシオ・挽き目・注湯時間・各投の手動編集もすべて破棄される。 */
@@ -1621,6 +2183,7 @@ button { touch-action: manipulation; }
     setTimeout(function () { b.textContent = was; }, 1400);
   });
 
+  loadTuning();
   renderInput();
 })();
 </script>
