@@ -799,16 +799,33 @@ button { touch-action: manipulation; }
   letter-spacing: .04em;
   color: var(--ink-3);
 }
-.fld input {
-  width: 76px;
+.fld-row { display: flex; align-items: center; gap: 4px; }
+.fld-sq {
+  flex: 0 0 auto;
+  width: 36px;
   height: 40px;
-  padding: 0 9px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.fld-sq:active { background: var(--line); }
+.fld-sq[disabled] { opacity: .3; cursor: default; }
+.fld input {
+  width: 66px;
+  height: 40px;
+  padding: 0 6px;
   border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
   background: var(--surface-2);
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   text-align: right;
   color: var(--ink);
@@ -1875,10 +1892,21 @@ button { touch-action: manipulation; }
     if (recipe) rebuild();   // 画面2を開いたあとならルール変更を反映し直す
   }
 
+  /* 直接入力と ＋/− の両対応。ラベルは label 要素にしない
+     （± を押したときに入力欄へフォーカスが飛んでしまうため）。 */
   function tuneField(field, rowRef) {
     var ref = field.ref || rowRef;
-    var wrap = el('label', 'fld');
+    var wrap = el('div', 'fld');
     wrap.appendChild(el('span', null, field.label));
+
+    var minus = el('button', 'fld-sq', '−');
+    minus.type = 'button';
+    minus.setAttribute('aria-label', field.label + 'を減らす');
+
+    var plus = el('button', 'fld-sq', '＋');
+    plus.type = 'button';
+    plus.setAttribute('aria-label', field.label + 'を増やす');
+
     var inp = document.createElement('input');
     inp.type = 'number';
     inp.inputMode = 'decimal';
@@ -1887,15 +1915,35 @@ button { touch-action: manipulation; }
     inp.max = String(field.max);
     inp.value = String(ref[field.key]);
     inp.disabled = !!field.disabled;
-    inp.addEventListener('change', function () {
-      var v = parseFloat(inp.value);
-      if (isNaN(v)) { inp.value = String(ref[field.key]); return; }
+    inp.setAttribute('aria-label', field.label);
+
+    function syncBounds() {
+      minus.disabled = !!field.disabled || ref[field.key] <= field.min;
+      plus.disabled  = !!field.disabled || ref[field.key] >= field.max;
+    }
+    /* 0.1 刻みの足し算が 11.399999… にならないよう毎回丸める */
+    function commit(v) {
       v = Math.round(clamp(v, field.min, field.max) * 1000) / 1000;
       ref[field.key] = v;
       inp.value = String(v);
+      syncBounds();
       onTuningChange();
+    }
+
+    minus.addEventListener('click', function () { commit(ref[field.key] - field.step); });
+    plus.addEventListener('click', function () { commit(ref[field.key] + field.step); });
+    inp.addEventListener('change', function () {
+      var v = parseFloat(inp.value);
+      if (isNaN(v)) { inp.value = String(ref[field.key]); return; }
+      commit(v);
     });
-    wrap.appendChild(inp);
+
+    var row = el('div', 'fld-row');
+    row.appendChild(minus);
+    row.appendChild(inp);
+    row.appendChild(plus);
+    wrap.appendChild(row);
+    syncBounds();
     return wrap;
   }
 
