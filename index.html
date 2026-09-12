@@ -901,11 +901,15 @@ button { touch-action: manipulation; }
           <div class="sec-head"><h2>Tools</h2><span class="jp">ツール</span></div>
           <div class="card" id="tools">
             <button type="button" class="tool" data-tool="paragon" aria-pressed="false">
-              <span class="label"><b>パラゴン</b><span>Paragon · +2℃</span></span>
+              <span class="label"><b>パラゴン</b><span id="tool-paragon-sub">Paragon</span></span>
               <span class="state">未使用</span>
             </button>
             <button type="button" class="tool" data-tool="switch" aria-pressed="false">
               <span class="label"><b>SWITCH</b><span>Immersion</span></span>
+              <span class="state">未使用</span>
+            </button>
+            <button type="button" class="tool" data-tool="ethiopia" aria-pressed="false">
+              <span class="label"><b>エチオピア</b><span id="tool-ethiopia-sub">Ethiopia</span></span>
               <span class="state">未使用</span>
             </button>
           </div>
@@ -1098,21 +1102,21 @@ button { touch-action: manipulation; }
     cone:    { 4: [20, 30, 25, 25], 5: [20, 25, 20, 20, 15] },
     flat:    { 4: [25, 25, 25, 25], 5: [20, 20, 20, 20, 20] },
     immerse: { 3: [20, 40, 40] },   /* SWITCH：3投固定 */
-    z1:      { 4: [20, 40, 25, 15] }
+    z1:      { 4: [25, 30, 25, 20] }
   };
 
   /* ブリューレシオ：10g を起点に 1g ごとに step ずつ増やし、cap で頭打ち */
   var RATIO = {
-    hot: { base: 15.5, step: 0.1, cap: 16.5 },
+    hot: { base: 15.4, step: 0.1, cap: 16.5 },
     ice: { base: 15.2, step: 0.1, cap: 16.0 },
-    z1:  { base: 15.0, step: 0.2, cap: 16.0 }
+    z1:  { base: 15.1, step: 0.2, cap: 16.0 }
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
      knee を置くと、そこを超えたぶん（knee+1g 以降）が step2 になる。 */
   var GRIND = {
     fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // 高速 / ウェーブ
-    balance:  { base: 11.3, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // バランス / フラット
+    balance:  { base: 11.7, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
     sibarist: { base: 10.0, step: 0.2,  knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
     z1:       { base: 10.0, step: 0.3,  cap: 99 },                                             // Orea Z1
     immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 }                     // SWITCH（balance と同じ傾き）
@@ -1145,8 +1149,9 @@ button { touch-action: manipulation; }
   ];
 
   var RULES = {
-    paragonTempBonus: 2,   // パラゴン使用時の湯温加算
-    timingTier: 5          // 豆量帯ごとの注湯時間の加算秒
+    paragonTempBonus: 2,     // パラゴン使用時の湯温加算
+    timingTier: 5,           // 豆量帯ごとの注湯時間の加算秒
+    ethiopiaGrindBonus: 0.2  // エチオピア浅煎り：微粉と詰まりを抑えるため挽き目を粗くする
   };
 
   /* Orea Z1 の制約：豆量 10〜15g / 4投のみ / ホットのみ */
@@ -1161,7 +1166,7 @@ button { touch-action: manipulation; }
     brew: 'hot',
     dripper: 'v60',
     paper: 'cone',
-    tools: { paragon: false, switch: false },
+    tools: { paragon: false, switch: false, ethiopia: false },
     temp: 92,
     pours: 4,
     beans: 20
@@ -1277,6 +1282,10 @@ button { touch-action: manipulation; }
   }
   function grindFor(cat, beans) { return ramp(GRIND[cat.grind], beans); }
 
+  /* エチオピアの浅煎りは豆が硬く微粉が出やすい。詰まりを抑えるぶんだけ粗くする。
+     狙って上限より粗くするので、ramp の cap のあとに足す。 */
+  function grindBonus(inp) { return inp.tools.ethiopia ? RULES.ethiopiaGrindBonus : 0; }
+
   /* 豆量帯は用途で段の切り方が違う */
   function drawdownTier(beans) { return beans < 16 ? 0 : (beans < 21 ? 1 : 2); }  // 10〜15 / 16〜20 / 21〜
   function timingTier(beans)   { return beans < 21 ? 0 : 1; }                     // 10〜20 / 21〜
@@ -1311,12 +1320,14 @@ button { touch-action: manipulation; }
       brew: inp.brew,
       paragon: inp.tools.paragon,
       immersion: inp.tools.switch,
+      ethiopia: inp.tools.ethiopia,
       dripper: inp.dripper,
       paper: inp.paper,
       category: cat.id,
       baseTemp: inp.temp,
       temp: inp.temp + (inp.tools.paragon ? RULES.paragonTempBonus : 0),
-      grind: grindFor(cat, inp.beans),
+      baseGrind: grindFor(cat, inp.beans),
+      grind: round1(grindFor(cat, inp.beans) + grindBonus(inp)),
       drawdown: DRAWDOWN[drawdownTier(inp.beans)],
       pours: distribute(water, SPLITS[cat.split][n], timesFor(cat, n, inp.beans))
     };
@@ -1390,9 +1401,15 @@ button { touch-action: manipulation; }
       b.setAttribute('aria-pressed', String(on));
       b.querySelector('.state').textContent = ok ? (on ? '使用中' : '未使用') : '対象外';
     });
-    $('#tool-note').textContent = switchUsable(input.dripper)
+    $('#tool-paragon-sub').textContent =
+      'Paragon · ＋' + fmt(RULES.paragonTempBonus) + '℃';
+    $('#tool-ethiopia-sub').textContent =
+      'Ethiopia · 挽き目 ＋' + fmt(RULES.ethiopiaGrindBonus);
+    $('#tool-note').textContent = (switchUsable(input.dripper)
       ? 'SWITCH を使うと浸漬系レシピになります。'
-      : 'SWITCH は V60 / V60 NEO / Orea O1・O2・V4 で使用できます。';
+      : 'SWITCH は V60 / V60 NEO / Orea O1・O2・V4 で使用できます。')
+      + ' エチオピアの浅煎りは硬くて微粉が出やすく詰まりやすいので、挽き目を ＋'
+      + fmt(RULES.ethiopiaGrindBonus) + ' 粗くします。';
 
     Array.prototype.forEach.call($('#seg-temp').children, function (b) {
       b.setAttribute('aria-pressed', String(Number(b.dataset.v) === input.temp));
@@ -1543,6 +1560,18 @@ button { touch-action: manipulation; }
     return w;
   }
 
+  /* 挽き目：加算があるときだけ内訳を出す（編集不可） */
+  function grindReadout(r) {
+    var on = r.ethiopia && RULES.ethiopiaGrindBonus !== 0;
+    var w = el('div', 'readout' + (on ? ' bonus' : ''));
+    w.appendChild(el('div', 'big', r.grind.toFixed(1)));
+    if (on) {
+      w.appendChild(el('div', 'sub',
+        r.baseGrind.toFixed(1) + ' ＋ エチオピア ' + fmt(RULES.ethiopiaGrindBonus)));
+    }
+    return w;
+  }
+
   function segTwo(options, current, onPick) {
     var s = el('div', 'seg2');
     options.forEach(function (o) {
@@ -1612,6 +1641,7 @@ button { touch-action: manipulation; }
     tags.appendChild(el('span', 'tag', p.name));
     if (recipe.paragon) tags.appendChild(el('span', 'tag on', 'パラゴン'));
     if (recipe.immersion) tags.appendChild(el('span', 'tag on', 'SWITCH'));
+    if (recipe.ethiopia) tags.appendChild(el('span', 'tag on', 'エチオピア'));
 
     /* --- parameter rows --- */
     var range = beansRange();
@@ -1637,7 +1667,7 @@ button { touch-action: manipulation; }
           ], recipe.pours.length, setPourCount)));
 
     rows.appendChild(paramRow('挽き目', 'Varia VS6 · Kilonova DLC',
-      fixedValue(recipe.grind.toFixed(1))));
+      grindReadout(recipe)));
 
     rows.appendChild(paramRow('落ちきり目標', 'Drawdown',
       fixedValue(mmss(recipe.drawdown.min) + '–' + mmss(recipe.drawdown.max), 'range')));
@@ -1875,8 +1905,9 @@ button { touch-action: manipulation; }
 
       { label: 'その他', sub: 'Misc',
         rows: [
-          { label: 'パラゴン加算',   ref: RULES, fields: [fld('paragonTempBonus', '℃', 0, 10, 1)] },
-          { label: '21g以降の加算', ref: RULES, fields: [fld('timingTier', '秒', 0, 60, 5)] }
+          { label: 'パラゴン加算',     ref: RULES, fields: [fld('paragonTempBonus', '℃', 0, 10, 1)] },
+          { label: 'エチオピア加算',   ref: RULES, fields: [fld('ethiopiaGrindBonus', '挽き目', 0, 3, 0.1)] },
+          { label: '21g以降の加算',   ref: RULES, fields: [fld('timingTier', '秒', 0, 60, 5)] }
         ] }
     ];
   }
@@ -1889,6 +1920,7 @@ button { touch-action: manipulation; }
     renderNumbersTable();
     renderExport();
     sumWatchers.forEach(function (w) { w(); });
+    renderInput();           // 画面1のツール副題・注記も定数から描いている
     if (recipe) rebuild();   // 画面2を開いたあとならルール変更を反映し直す
   }
 
@@ -2092,6 +2124,7 @@ button { touch-action: manipulation; }
     row('Sibarist',          function (d) { return ramp(GRIND.sibarist, d).toFixed(1); });
     row('Orea Z1',           z1Only(function (d) { return ramp(GRIND.z1, d).toFixed(1); }));
     row('SWITCH',            function (d) { return ramp(GRIND.immerse, d).toFixed(1); });
+    row('エチオピア加算',      function ()  { return '+' + fmt(RULES.ethiopiaGrindBonus); });
 
     group('落ちきり目標');
     row('目標', function (d) {
