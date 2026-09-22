@@ -890,6 +890,7 @@ button { touch-action: manipulation; }
         <div class="sec">
           <div class="sec-head"><h2>Dripper</h2><span class="jp">ドリッパー</span></div>
           <div id="dripper-groups"></div>
+          <p class="sec-note">Pinn ドリッパーは準備中です（レシピ未設定）。</p>
         </div>
 
         <div class="sec">
@@ -910,6 +911,10 @@ button { touch-action: manipulation; }
             </button>
             <button type="button" class="tool" data-tool="ethiopia" aria-pressed="false">
               <span class="label"><b>エチオピア</b><span id="tool-ethiopia-sub">Ethiopia</span></span>
+              <span class="state">未使用</span>
+            </button>
+            <button type="button" class="tool" data-tool="sibarist" aria-pressed="false">
+              <span class="label"><b>Sibarist</b><span id="tool-sibarist-sub">Paper</span></span>
               <span class="state">未使用</span>
             </button>
           </div>
@@ -1050,10 +1055,12 @@ button { touch-action: manipulation; }
      CATALOG
      shape : 'cone' 円錐 / 'flat' 平底
      並び順は 数字 → 英字 → 日本語（sortByName）で自動的に整列します。
+     pending : true のものはボタンだけ表示し、まだ選べない（レシピ未設定）。
      ========================================================== */
   var DRIPPERS = [
     { id: 'acid',    name: 'ACID ドリッパー',  shape: 'cone' },
     { id: 'ct62',    name: 'CT62',            shape: 'cone' },
+    { id: 'pinn',    name: 'Pinn ドリッパー',  shape: 'cone', pending: true },
     { id: 'v60',     name: 'V60',             shape: 'cone' },
     { id: 'v60neo',  name: 'V60 NEO',         shape: 'cone' },
     { id: 'flower',  name: 'フラワードリッパー', shape: 'cone' },
@@ -1064,13 +1071,13 @@ button { touch-action: manipulation; }
     { id: 'orea-z1', name: 'Orea Z1',         shape: 'flat' }
   ];
 
-  /* ペーパーは指定された表示順をそのまま使う（並べ替えしない） */
+  /* ペーパーは指定された表示順をそのまま使う（並べ替えしない）。
+     Sibarist（円錐・フラット）は単独のペーパーではなく、ツールの挽き目加算で扱う。
+     以前の単独項目方式は git タグ backup-sibarist-paper に残してある。 */
   var PAPERS = [
     { id: 'cone',     name: '円錐',              shape: 'cone' },
-    { id: 'sib-cone', name: 'Sibarist（円錐）',   shape: 'cone' },
     { id: 'wave',     name: 'ウェーブ',           shape: 'flat' },
     { id: 'flat',     name: 'フラット',           shape: 'flat' },
-    { id: 'sib-flat', name: 'Sibarist（フラット）', shape: 'flat' },
     { id: 'sib-z1',   name: 'Sibarist（Z1）',     shape: 'flat' }
   ];
 
@@ -1090,10 +1097,8 @@ button { touch-action: manipulation; }
     { id: 'immerse',      label: '浸漬系',             split: 'immerse', grind: 'immerse' },
     { id: 'cone-fast',    label: '高速ドリッパー',      split: 'cone',    grind: 'fast',     timing: 'A' },
     { id: 'cone-balance', label: 'バランスドリッパー',   split: 'cone',    grind: 'balance',  timing: 'A' },
-    { id: 'cone-sib',     label: 'Sibarist（円錐）',    split: 'cone',    grind: 'sibarist', timing: 'B' },
     { id: 'flat-wave',    label: 'ウェーブ',            split: 'flat',    grind: 'fast',     timing: 'B' },
     { id: 'flat-flat',    label: 'フラット',            split: 'flat',    grind: 'balance',  timing: 'A' },
-    { id: 'flat-sib',     label: 'Sibarist（フラット）', split: 'flat',    grind: 'sibarist', timing: 'B' },
     { id: 'flat-z1',      label: 'Sibarist（Z1）',      split: 'z1',      grind: 'z1',       timing: 'A' }
   ];
 
@@ -1116,9 +1121,8 @@ button { touch-action: manipulation; }
      knee を置くと、そこを超えたぶん（knee+1g 以降）が step2 になる。 */
   var GRIND = {
     fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // 高速 / ウェーブ
-    balance:  { base: 11.7, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
-    sibarist: { base: 10.0, step: 0.2,  knee: 15, step2: 0.1,  cap: 12 },                      // Sibarist 円錐 / フラット
-    z1:       { base: 10.0, step: 0.3,  cap: 99 },                                             // Orea Z1
+    balance:  { base: 11.8, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
+    z1:       { base: 10.0, step: 0.4,  cap: 99 },                                             // Orea Z1
     immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 }                     // SWITCH（balance と同じ傾き）
   };
 
@@ -1126,7 +1130,7 @@ button { touch-action: manipulation; }
      21g以降は2投目以降に各 +5秒（1投目は常に 0:00）。 */
   var TIMING = {
     A: { 4: [0, 30, 65, 100], 5: [0, 30, 60, 85, 105] },  // フラット / 高速 / バランス / Z1
-    B: { 4: [0, 30, 60,  90], 5: [0, 30, 60, 80, 100] }   // ウェーブ / Sibarist（円錐・フラット）
+    B: { 4: [0, 30, 60,  90], 5: [0, 30, 60, 80, 100] }   // ウェーブ
   };
 
   /* SWITCH（浸漬系）の固定スケジュール：3投固定、スイッチの開閉と連動。豆量による調整はない。
@@ -1151,11 +1155,12 @@ button { touch-action: manipulation; }
   var RULES = {
     paragonTempBonus: 2,     // パラゴン使用時の湯温加算
     timingTier: 5,           // 豆量帯ごとの注湯時間の加算秒
-    ethiopiaGrindBonus: 0.2  // エチオピア浅煎り：微粉と詰まりを抑えるため挽き目を粗くする
+    ethiopiaGrindBonus: 0.2, // エチオピア浅煎り：微粉と詰まりを抑えるため挽き目を粗くする
+    sibaristGrindBonus: -0.4 // Sibarist：透過が非常に速いペーパーなので挽き目を細かくする
   };
 
-  /* Orea Z1 の制約：豆量 10〜15g / 4投のみ / ホットのみ */
-  var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 15, pours: 4 };
+  /* Orea Z1 の制約：豆量 10〜15.9g（15g 狙いで計量して 15.2g などになっても使えるよう、15g 台まで許容） / 4投のみ / ホットのみ */
+  var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 15.9, pours: 4 };
   var DOSE = { min: 10, max: 35 };
   var DOSE_PRESETS = [10, 15, 20, 25, 30];
 
@@ -1166,7 +1171,7 @@ button { touch-action: manipulation; }
     brew: 'hot',
     dripper: 'v60',
     paper: 'cone',
-    tools: { paragon: false, switch: false, ethiopia: false },
+    tools: { paragon: false, switch: false, ethiopia: false, sibarist: false },
     temp: 92,
     pours: 4,
     beans: 20
@@ -1215,6 +1220,8 @@ button { touch-action: manipulation; }
   function beansRange() { return isZ1(input.dripper) ? [Z1.min, Z1.max] : [DOSE.min, DOSE.max]; }
   function poursUsable(n) { return !(isZ1(input.dripper) && n !== Z1.pours); }
   function iceUsable() { return !isZ1(input.dripper); }
+  /* Z1 の専用フィルターはもともと Sibarist なので、加算を重ねない */
+  function sibaristUsable(dripperId) { return !isZ1(dripperId); }
 
   function paperUsable(p, dripperId) {
     var d = byId(DRIPPERS, dripperId);
@@ -1227,7 +1234,9 @@ button { touch-action: manipulation; }
 
   /* 選択の組み合わせが常に成立するよう整える */
   function reconcile() {
+    if (byId(DRIPPERS, input.dripper).pending) input.dripper = 'v60';
     if (!switchUsable(input.dripper)) input.tools.switch = false;
+    if (!sibaristUsable(input.dripper)) input.tools.sibarist = false;
     if (!iceUsable()) input.brew = 'hot';
     if (!paperUsable(byId(PAPERS, input.paper), input.dripper)) {
       for (var i = 0; i < PAPERS.length; i++) {
@@ -1236,7 +1245,8 @@ button { touch-action: manipulation; }
     }
     if (!poursUsable(input.pours)) input.pours = Z1.pours;
     var r = beansRange();
-    input.beans = clamp(input.beans, r[0], r[1]);
+    /* 上限超えは整数gに寄せる（Z1 は上限 15.9g だが、狙いは 15g） */
+    input.beans = input.beans > r[1] ? Math.floor(r[1]) : Math.max(r[0], input.beans);
   }
 
   /* ==========================================================
@@ -1247,15 +1257,11 @@ button { touch-action: manipulation; }
     var d = byId(DRIPPERS, inp.dripper);
     var id;
     if (d.shape === 'cone') {
-      /* Sibarist は挽き目が別系統なので、ドリッパー種別より優先する */
-      if (inp.paper === 'sib-cone') id = 'cone-sib';
-      else id = CONE_FAST.indexOf(inp.dripper) >= 0 ? 'cone-fast' : 'cone-balance';
+      id = CONE_FAST.indexOf(inp.dripper) >= 0 ? 'cone-fast' : 'cone-balance';
     } else if (isZ1(inp.dripper)) {
       id = 'flat-z1';
     } else if (inp.paper === 'wave') {
       id = 'flat-wave';
-    } else if (inp.paper === 'sib-flat') {
-      id = 'flat-sib';
     } else {
       id = 'flat-flat';
     }
@@ -1282,9 +1288,15 @@ button { touch-action: manipulation; }
   }
   function grindFor(cat, beans) { return ramp(GRIND[cat.grind], beans); }
 
-  /* エチオピアの浅煎りは豆が硬く微粉が出やすい。詰まりを抑えるぶんだけ粗くする。
-     狙って上限より粗くするので、ramp の cap のあとに足す。 */
-  function grindBonus(inp) { return inp.tools.ethiopia ? RULES.ethiopiaGrindBonus : 0; }
+  /* 挽き目の加算。狙って上限を超える／下回るので、ramp の cap のあとに足す。
+     エチオピア：浅煎りは豆が硬く微粉が出やすいので、詰まりを抑えるぶんだけ粗くする。
+     Sibarist：透過が非常に速いペーパーなので、細かくしてちょうど良くする。 */
+  function grindBonus(inp) {
+    return (inp.tools.ethiopia ? RULES.ethiopiaGrindBonus : 0)
+      + (inp.tools.sibarist && sibaristUsable(inp.dripper) ? RULES.sibaristGrindBonus : 0);
+  }
+  /* 符号つき表示（＋0.2 / −0.4） */
+  function signed(n) { return (n < 0 ? '−' : '＋') + fmt(Math.abs(n)); }
 
   /* 豆量帯は用途で段の切り方が違う */
   function drawdownTier(beans) { return beans < 16 ? 0 : (beans < 21 ? 1 : 2); }  // 10〜15 / 16〜20 / 21〜
@@ -1321,6 +1333,7 @@ button { touch-action: manipulation; }
       paragon: inp.tools.paragon,
       immersion: inp.tools.switch,
       ethiopia: inp.tools.ethiopia,
+      sibarist: inp.tools.sibarist && sibaristUsable(inp.dripper),
       dripper: inp.dripper,
       paper: inp.paper,
       category: cat.id,
@@ -1382,7 +1395,7 @@ button { touch-action: manipulation; }
 
     buildGroups($('#dripper-groups'), DRIPPERS, true,
       function (x) { return x.id === input.dripper; },
-      function () { return true; });
+      function (x) { return !x.pending; });
 
     buildGroups($('#paper-groups'), PAPERS, false,
       function (x) { return x.id === input.paper; },
@@ -1395,7 +1408,8 @@ button { touch-action: manipulation; }
 
     Array.prototype.forEach.call($('#tools').children, function (b) {
       var key = b.dataset.tool;
-      var ok = key === 'switch' ? switchUsable(input.dripper) : true;
+      var ok = key === 'switch' ? switchUsable(input.dripper)
+        : key === 'sibarist' ? sibaristUsable(input.dripper) : true;
       var on = !!input.tools[key];
       b.disabled = !ok;
       b.setAttribute('aria-pressed', String(on));
@@ -1404,12 +1418,16 @@ button { touch-action: manipulation; }
     $('#tool-paragon-sub').textContent =
       'Paragon · ＋' + fmt(RULES.paragonTempBonus) + '℃';
     $('#tool-ethiopia-sub').textContent =
-      'Ethiopia · 挽き目 ＋' + fmt(RULES.ethiopiaGrindBonus);
+      'Ethiopia · 挽き目 ' + signed(RULES.ethiopiaGrindBonus);
+    $('#tool-sibarist-sub').textContent =
+      'Paper · 挽き目 ' + signed(RULES.sibaristGrindBonus);
     $('#tool-note').textContent = (switchUsable(input.dripper)
       ? 'SWITCH を使うと浸漬系レシピになります。'
       : 'SWITCH は V60 / V60 NEO / Orea O1・O2・V4 で使用できます。')
-      + ' エチオピアの浅煎りは硬くて微粉が出やすく詰まりやすいので、挽き目を ＋'
-      + fmt(RULES.ethiopiaGrindBonus) + ' 粗くします。';
+      + ' エチオピアの浅煎りは硬くて微粉が出やすく詰まりやすいので、挽き目を '
+      + signed(RULES.ethiopiaGrindBonus) + ' します。'
+      + ' Sibarist は透過が非常に速いペーパーなので、挽き目を '
+      + signed(RULES.sibaristGrindBonus) + ' します（Orea Z1 は専用フィルターのため対象外）。';
 
     Array.prototype.forEach.call($('#seg-temp').children, function (b) {
       b.setAttribute('aria-pressed', String(Number(b.dataset.v) === input.temp));
@@ -1562,12 +1580,13 @@ button { touch-action: manipulation; }
 
   /* 挽き目：加算があるときだけ内訳を出す（編集不可） */
   function grindReadout(r) {
-    var on = r.ethiopia && RULES.ethiopiaGrindBonus !== 0;
-    var w = el('div', 'readout' + (on ? ' bonus' : ''));
+    var parts = [];
+    if (r.ethiopia && RULES.ethiopiaGrindBonus !== 0) parts.push('エチオピア ' + signed(RULES.ethiopiaGrindBonus));
+    if (r.sibarist && RULES.sibaristGrindBonus !== 0) parts.push('Sibarist ' + signed(RULES.sibaristGrindBonus));
+    var w = el('div', 'readout' + (parts.length ? ' bonus' : ''));
     w.appendChild(el('div', 'big', r.grind.toFixed(1)));
-    if (on) {
-      w.appendChild(el('div', 'sub',
-        r.baseGrind.toFixed(1) + ' ＋ エチオピア ' + fmt(RULES.ethiopiaGrindBonus)));
+    if (parts.length) {
+      w.appendChild(el('div', 'sub', r.baseGrind.toFixed(1) + ' ' + parts.join(' ')));
     }
     return w;
   }
@@ -1642,6 +1661,7 @@ button { touch-action: manipulation; }
     if (recipe.paragon) tags.appendChild(el('span', 'tag on', 'パラゴン'));
     if (recipe.immersion) tags.appendChild(el('span', 'tag on', 'SWITCH'));
     if (recipe.ethiopia) tags.appendChild(el('span', 'tag on', 'エチオピア'));
+    if (recipe.sibarist) tags.appendChild(el('span', 'tag on', 'Sibarist'));
 
     /* --- parameter rows --- */
     var range = beansRange();
@@ -1858,7 +1878,6 @@ button { touch-action: manipulation; }
         rows: [
           { label: '高速 / ウェーブ',           ref: GRIND.fast,     fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
           { label: 'バランス / フラット',        ref: GRIND.balance,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
-          { label: 'Sibarist（円錐・フラット）', ref: GRIND.sibarist, fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
           { label: 'Orea Z1',                  ref: GRIND.z1,       fields: rampFields(['base', 'step', 'cap']) },
           { label: 'SWITCH（浸漬系）',          ref: GRIND.immerse,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) }
         ] },
@@ -1879,7 +1898,7 @@ button { touch-action: manipulation; }
         rows: [
           { label: 'A · 4投（フラット/高速/バランス/Z1）', ref: TIMING.A[4], fields: secFields(TIMING.A[4], true) },
           { label: 'A · 5投',                            ref: TIMING.A[5], fields: secFields(TIMING.A[5], true) },
-          { label: 'B · 4投（ウェーブ/Sibarist）',        ref: TIMING.B[4], fields: secFields(TIMING.B[4], true) },
+          { label: 'B · 4投（ウェーブ）',        ref: TIMING.B[4], fields: secFields(TIMING.B[4], true) },
           { label: 'B · 5投',                            ref: TIMING.B[5], fields: secFields(TIMING.B[5], true) }
         ] },
 
@@ -1907,6 +1926,7 @@ button { touch-action: manipulation; }
         rows: [
           { label: 'パラゴン加算',     ref: RULES, fields: [fld('paragonTempBonus', '℃', 0, 10, 1)] },
           { label: 'エチオピア加算',   ref: RULES, fields: [fld('ethiopiaGrindBonus', '挽き目', 0, 3, 0.1)] },
+          { label: 'Sibarist加算',    ref: RULES, fields: [fld('sibaristGrindBonus', '挽き目', -3, 0, 0.1)] },
           { label: '21g以降の加算',   ref: RULES, fields: [fld('timingTier', '秒', 0, 60, 5)] }
         ] }
     ];
@@ -2103,7 +2123,7 @@ button { touch-action: manipulation; }
       });
       tb.appendChild(r);
     }
-    /* Orea Z1 は 10〜15g 専用なので、範囲外の列は「—」にする */
+    /* Orea Z1 は 10〜15.9g 専用なので、範囲外の列は「—」にする */
     function z1Only(fn) {
       return function (d) { return (d < Z1.min || d > Z1.max) ? null : fn(d); };
     }
@@ -2121,10 +2141,10 @@ button { touch-action: manipulation; }
     group('挽き目');
     row('高速 / ウェーブ',    function (d) { return ramp(GRIND.fast, d).toFixed(1); });
     row('バランス / フラット', function (d) { return ramp(GRIND.balance, d).toFixed(1); });
-    row('Sibarist',          function (d) { return ramp(GRIND.sibarist, d).toFixed(1); });
     row('Orea Z1',           z1Only(function (d) { return ramp(GRIND.z1, d).toFixed(1); }));
     row('SWITCH',            function (d) { return ramp(GRIND.immerse, d).toFixed(1); });
-    row('エチオピア加算',      function ()  { return '+' + fmt(RULES.ethiopiaGrindBonus); });
+    row('エチオピア加算',      function ()  { return signed(RULES.ethiopiaGrindBonus); });
+    row('Sibarist加算',       function ()  { return signed(RULES.sibaristGrindBonus); });
 
     group('落ちきり目標');
     row('目標', function (d) {
