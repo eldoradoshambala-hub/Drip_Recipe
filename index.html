@@ -1109,9 +1109,9 @@ button { touch-action: manipulation; }
     cone:    { 4: [20, 30, 25, 25], 5: [20, 25, 20, 20, 15] },
     flat:    { 4: [25, 25, 25, 25], 5: [20, 20, 20, 20, 20] },
     immerse: { 3: [20, 40, 40] },   /* SWITCH：3投固定 */
-    z1:      { 4: [25, 30, 25, 20] },
-    /* Pinn：公式レシピ（豆12g）30g / 70g / 80g ＝ 計180g の比率。3投固定 */
-    pinn:    { 3: [16.7, 38.9, 44.4] }
+    z1:      { 4: [25, 25, 25, 25] },
+    /* Pinn：3投固定 */
+    pinn:    { 3: [25, 40, 35] }
   };
 
   /* ブリューレシオ：10g を起点に 1g ごとに step ずつ増やし、cap で頭打ち */
@@ -1119,7 +1119,7 @@ button { touch-action: manipulation; }
     hot:  { base: 15.4, step: 0.1, cap: 16.5 },
     ice:  { base: 15.2, step: 0.1, cap: 16.0 },
     z1:   { base: 15.1, step: 0.2, cap: 16.0 },
-    pinn: { base: 14.8, step: 0.1, cap: 15.3 }   // Pinn：公式の 12g 1:15 を軸に 10g 1:14.8 → 15g 1:15.3
+    pinn: { base: 14.8, step: 0.1, cap: 15.4 }   // Pinn：公式の 12g 1:15 を軸に 10g 1:14.8 → 16g 1:15.4
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
@@ -1129,7 +1129,7 @@ button { touch-action: manipulation; }
     balance:  { base: 11.8, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
     z1:       { base: 10.0, step: 0.4,  cap: 99 },                                             // Orea Z1
     immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // SWITCH（balance と同じ傾き）
-    pinn:     { base: 12.0, step: 0.2,  cap: 13.0 }                                            // Pinn：10g 12.0 → 15g 13.0
+    pinn:     { base: 12.0, step: 0.2,  cap: 13.2 }                                            // Pinn：10g 12.0 → 15g 13.0 → 16g 13.2
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
@@ -1168,10 +1168,10 @@ button { touch-action: manipulation; }
     sibaristGrindBonus: -0.4 // Sibarist：透過が非常に速いペーパーなので挽き目を細かくする
   };
 
-  /* Orea Z1 の制約：豆量 10〜15.9g（15g 狙いで計量して 15.2g などになっても使えるよう、15g 台まで許容） / 4投のみ / ホットのみ */
-  var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 15.9, pours: 4 };
-  /* Pinn の制約：豆量 10〜15.9g（最大 15g、Z1 と同じく 15g 台まで許容） / 3投のみ / ホットのみ */
-  var PINN = { dripper: 'pinn', min: 10, max: 15.9, pours: 3 };
+  /* Orea Z1 の制約：豆量 10〜16.9g（16g 狙いで計量して 16.2g などになっても使えるよう、16g 台まで許容） / 4投のみ / ホットのみ */
+  var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 16.9, pours: 4 };
+  /* Pinn の制約：豆量 10〜16.9g（最大 16g、Z1 と同じく 16g 台まで許容） / 3投のみ / ホットのみ */
+  var PINN = { dripper: 'pinn', min: 10, max: 16.9, pours: 3 };
   var DOSE = { min: 10, max: 35 };
   var DOSE_PRESETS = [10, 15, 20, 25, 30];
 
@@ -1261,7 +1261,7 @@ button { touch-action: manipulation; }
     }
     if (!poursUsable(input.pours)) input.pours = Z1.pours;
     var r = beansRange();
-    /* 上限超えは整数gに寄せる（Z1 / Pinn は上限 15.9g だが、狙いは 15g） */
+    /* 上限超えは整数gに寄せる（Z1 / Pinn は上限 16.9g だが、狙いは 16g） */
     input.beans = input.beans > r[1] ? Math.floor(r[1]) : Math.max(r[0], input.beans);
   }
 
@@ -1319,8 +1319,11 @@ button { touch-action: manipulation; }
   function drawdownTier(beans) { return beans < 16 ? 0 : (beans < 21 ? 1 : 2); }  // 10〜15 / 16〜20 / 21〜
   function timingTier(beans)   { return beans < 21 ? 0 : 1; }                     // 10〜20 / 21〜
 
+  /* Orea Z1 は 16g 台まで使えるが、目標は豆量によらず 10〜15g の帯のまま */
   function drawdownFor(cat, beans) {
-    return cat.id === 'pinn' ? DRAWDOWN_PINN : DRAWDOWN[drawdownTier(beans)];
+    if (cat.id === 'pinn') return DRAWDOWN_PINN;
+    if (cat.id === 'flat-z1') return DRAWDOWN[0];
+    return DRAWDOWN[drawdownTier(beans)];
   }
 
   /* 投数が決まっている分類（投数の切り替えを出さない）。それ以外は null。 */
@@ -1948,7 +1951,7 @@ button { touch-action: manipulation; }
         ] },
 
       { label: '落ちきり目標', sub: 'Drawdown',
-        note: '豆量帯ごとの目標秒数。Pinn は豆量によらず専用の目標を使います。',
+        note: '豆量帯ごとの目標秒数。Orea Z1 は 16g 台でも 10〜15g の目標を、Pinn は豆量によらず専用の目標を使います。',
         rows: [
           { label: '10〜15g', ref: DRAWDOWN[0], fields: drawdownFields() },
           { label: '16〜20g', ref: DRAWDOWN[1], fields: drawdownFields() },
@@ -2157,11 +2160,11 @@ button { touch-action: manipulation; }
       });
       tb.appendChild(r);
     }
-    /* Orea Z1 は 10〜15.9g 専用なので、範囲外の列は「—」にする */
+    /* Orea Z1 は 10〜16.9g 専用なので、範囲外の列は「—」にする */
     function z1Only(fn) {
       return function (d) { return (d < Z1.min || d > Z1.max) ? null : fn(d); };
     }
-    /* Pinn も 10〜15.9g 専用 */
+    /* Pinn も 10〜16.9g 専用 */
     function pinnOnly(fn) {
       return function (d) { return (d < PINN.min || d > PINN.max) ? null : fn(d); };
     }
