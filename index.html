@@ -1244,7 +1244,6 @@ button { touch-action: manipulation; }
     if (p.shape !== d.shape) return false;
     if (isZ1(dripperId)) return p.id === Z1.paper;      // Z1 は専用フィルターのみ
     if (p.id === Z1.paper) return false;                // Z1 専用フィルターは他では使えない
-    if (dripperId === 'april') return p.id === 'wave';  // April はウェーブのみ
     return true;
   }
 
