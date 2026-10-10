@@ -928,7 +928,6 @@ button { touch-action: manipulation; }
             <button type="button" data-v="92" aria-pressed="true">92℃</button>
             <button type="button" data-v="94" aria-pressed="false">94℃</button>
           </div>
-          <p class="sec-note" id="temp-note"></p>
         </div>
 
         <div class="sec">
@@ -1067,7 +1066,8 @@ button { touch-action: manipulation; }
     { id: 'orea-o1', name: 'Orea O1',         shape: 'flat' },
     { id: 'orea-o2', name: 'Orea O2',         shape: 'flat' },
     { id: 'orea-v4', name: 'Orea V4',         shape: 'flat' },
-    { id: 'orea-z1', name: 'Orea Z1',         shape: 'flat' }
+    { id: 'orea-z1', name: 'Orea Z1',         shape: 'flat' },
+    { id: 'orea-z1-even', name: 'Orea Z1（均等注湯）', shape: 'flat' }
   ];
 
   /* ペーパーは指定された表示順をそのまま使う（並べ替えしない）。
@@ -1101,6 +1101,7 @@ button { touch-action: manipulation; }
     { id: 'flat-wave',    label: 'ウェーブ',            split: 'flat',    grind: 'fast',     timing: 'B' },
     { id: 'flat-flat',    label: 'フラット',            split: 'flat',    grind: 'balance',  timing: 'A' },
     { id: 'flat-z1',      label: 'Sibarist（Z1）',      split: 'z1',      grind: 'z1',       timing: 'A',    ratio: 'z1' },
+    { id: 'flat-z1-even', label: 'Sibarist（Z1）均等注湯', split: 'z1even', grind: 'z1',       timing: 'A',    ratio: 'z1' },
     { id: 'pinn',         label: 'Pinn 公式レシピ',      split: 'pinn',    grind: 'pinn',     timing: 'pinn', ratio: 'pinn' }
   ];
 
@@ -1109,7 +1110,8 @@ button { touch-action: manipulation; }
     cone:    { 4: [20, 30, 25, 25], 5: [20, 25, 20, 20, 15] },
     flat:    { 4: [25, 25, 25, 25], 5: [20, 20, 20, 20, 20] },
     immerse: { 3: [20, 40, 40] },   /* SWITCH：3投固定 */
-    z1:      { 4: [25, 25, 25, 25] },
+    z1:      { 4: [25, 30, 25, 20] },
+    z1even:  { 4: [25, 25, 25, 25] },   /* Orea Z1（均等注湯） */
     /* Pinn：3投固定 */
     pinn:    { 3: [25, 40, 35] }
   };
@@ -1119,7 +1121,7 @@ button { touch-action: manipulation; }
     hot:  { base: 15.4, step: 0.1, cap: 16.5 },
     ice:  { base: 15.2, step: 0.1, cap: 16.0 },
     z1:   { base: 15.1, step: 0.2, cap: 16.0 },
-    pinn: { base: 14.8, step: 0.1, cap: 15.4 }   // Pinn：公式の 12g 1:15 を軸に 10g 1:14.8 → 16g 1:15.4
+    pinn: { base: 14.8, step: 0.15, cap: 16.0 }  // Pinn
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
@@ -1129,7 +1131,7 @@ button { touch-action: manipulation; }
     balance:  { base: 11.8, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
     z1:       { base: 10.0, step: 0.4,  cap: 99 },                                             // Orea Z1
     immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // SWITCH（balance と同じ傾き）
-    pinn:     { base: 12.0, step: 0.2,  cap: 13.2 }                                            // Pinn：10g 12.0 → 15g 13.0 → 16g 13.2
+    pinn:     { base: 12.0, step: 0.25, cap: 15.0 }                                            // Pinn
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
@@ -1162,14 +1164,14 @@ button { touch-action: manipulation; }
   var DRAWDOWN_PINN = { min: 90, max: 100 };   // 1:30 – 1:40
 
   var RULES = {
-    paragonTempBonus: 2,     // パラゴン使用時の湯温加算
+    paragonGrindBonus: 0.4,  // パラゴン：挽き目を粗くする
     timingTier: 5,           // 豆量帯ごとの注湯時間の加算秒
-    ethiopiaGrindBonus: 0.2, // エチオピア浅煎り：微粉と詰まりを抑えるため挽き目を粗くする
+    ethiopiaGrindBonus: 0.4, // エチオピア浅煎り：微粉と詰まりを抑えるため挽き目を粗くする
     sibaristGrindBonus: -0.4 // Sibarist：透過が非常に速いペーパーなので挽き目を細かくする
   };
 
   /* Orea Z1 の制約：豆量 10〜16.9g（16g 狙いで計量して 16.2g などになっても使えるよう、16g 台まで許容） / 4投のみ / ホットのみ */
-  var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 16.9, pours: 4 };
+  var Z1 = { drippers: ['orea-z1', 'orea-z1-even'], paper: 'sib-z1', min: 10, max: 16.9, pours: 4 };
   /* Pinn の制約：豆量 10〜16.9g（最大 16g、Z1 と同じく 16g 台まで許容） / 3投のみ / ホットのみ */
   var PINN = { dripper: 'pinn', min: 10, max: 16.9, pours: 3 };
   var DOSE = { min: 10, max: 35 };
@@ -1226,7 +1228,8 @@ button { touch-action: manipulation; }
   /* ==========================================================
      CONSTRAINTS
      ========================================================== */
-  function isZ1(dripperId) { return dripperId === Z1.dripper; }
+  /* Orea Z1 と Orea Z1（均等注湯）は配分だけが違い、制約は共通 */
+  function isZ1(dripperId) { return Z1.drippers.indexOf(dripperId) >= 0; }
   function isPinn(dripperId) { return dripperId === PINN.dripper; }
   function switchUsable(dripperId) { return SWITCH_OK.indexOf(dripperId) >= 0; }
   function beansRange() {
@@ -1275,7 +1278,7 @@ button { touch-action: manipulation; }
     if (d.shape === 'cone') {
       id = CONE_FAST.indexOf(inp.dripper) >= 0 ? 'cone-fast' : 'cone-balance';
     } else if (isZ1(inp.dripper)) {
-      id = 'flat-z1';
+      id = inp.dripper === 'orea-z1-even' ? 'flat-z1-even' : 'flat-z1';
     } else if (inp.paper === 'wave') {
       id = 'flat-wave';
     } else {
@@ -1305,10 +1308,12 @@ button { touch-action: manipulation; }
   function grindFor(cat, beans) { return ramp(GRIND[cat.grind], beans); }
 
   /* 挽き目の加算。狙って上限を超える／下回るので、ramp の cap のあとに足す。
+     パラゴン：湯温は上げず、挽き目を粗くして調整する。
      エチオピア：浅煎りは豆が硬く微粉が出やすいので、詰まりを抑えるぶんだけ粗くする。
      Sibarist：透過が非常に速いペーパーなので、細かくしてちょうど良くする。 */
   function grindBonus(inp) {
-    return (inp.tools.ethiopia ? RULES.ethiopiaGrindBonus : 0)
+    return (inp.tools.paragon ? RULES.paragonGrindBonus : 0)
+      + (inp.tools.ethiopia ? RULES.ethiopiaGrindBonus : 0)
       + (inp.tools.sibarist && sibaristUsable(inp.dripper) ? RULES.sibaristGrindBonus : 0);
   }
   /* 符号つき表示（＋0.2 / −0.4） */
@@ -1321,7 +1326,7 @@ button { touch-action: manipulation; }
   /* Orea Z1 は 16g 台まで使えるが、目標は豆量によらず 10〜15g の帯のまま */
   function drawdownFor(cat, beans) {
     if (cat.id === 'pinn') return DRAWDOWN_PINN;
-    if (cat.id === 'flat-z1') return DRAWDOWN[0];
+    if (cat.ratio === 'z1') return DRAWDOWN[0];
     return DRAWDOWN[drawdownTier(beans)];
   }
 
@@ -1354,7 +1359,7 @@ button { touch-action: manipulation; }
   function buildRecipe(inp) {
     var cat = resolveCategory(inp);
     var iced = inp.brew === 'ice';
-    var n = cat.split === 'z1' ? Z1.pours : (fixedPours(cat) || inp.pours);
+    var n = isZ1(inp.dripper) ? Z1.pours : (fixedPours(cat) || inp.pours);
     var water = Math.round(inp.beans * ratioFor(cat, inp.beans, iced));
 
     return {
@@ -1367,8 +1372,7 @@ button { touch-action: manipulation; }
       dripper: inp.dripper,
       paper: inp.paper,
       category: cat.id,
-      baseTemp: inp.temp,
-      temp: inp.temp + (inp.tools.paragon ? RULES.paragonTempBonus : 0),
+      temp: inp.temp,
       baseGrind: grindFor(cat, inp.beans),
       grind: round1(grindFor(cat, inp.beans) + grindBonus(inp)),
       drawdown: drawdownFor(cat, inp.beans),
@@ -1446,7 +1450,7 @@ button { touch-action: manipulation; }
       b.querySelector('.state').textContent = ok ? (on ? '使用中' : '未使用') : '対象外';
     });
     $('#tool-paragon-sub').textContent =
-      'Paragon · ＋' + fmt(RULES.paragonTempBonus) + '℃';
+      'Paragon · 挽き目 ' + signed(RULES.paragonGrindBonus);
     $('#tool-ethiopia-sub').textContent =
       'Ethiopia · 挽き目 ' + signed(RULES.ethiopiaGrindBonus);
     $('#tool-sibarist-sub').textContent =
@@ -1454,6 +1458,7 @@ button { touch-action: manipulation; }
     $('#tool-note').textContent = (switchUsable(input.dripper)
       ? 'SWITCH を使うと浸漬系レシピになります。'
       : 'SWITCH は V60 / V60 NEO / Orea O1・O2・V4 で使用できます。')
+      + ' パラゴンを使うと挽き目を ' + signed(RULES.paragonGrindBonus) + ' します。'
       + ' エチオピアの浅煎りは硬くて微粉が出やすく詰まりやすいので、挽き目を '
       + signed(RULES.ethiopiaGrindBonus) + ' します。'
       + ' Sibarist は透過が非常に速いペーパーなので、挽き目を '
@@ -1462,9 +1467,6 @@ button { touch-action: manipulation; }
     Array.prototype.forEach.call($('#seg-temp').children, function (b) {
       b.setAttribute('aria-pressed', String(Number(b.dataset.v) === input.temp));
     });
-    $('#temp-note').textContent = input.tools.paragon
-      ? 'パラゴン使用中：レシピは ' + (input.temp + RULES.paragonTempBonus) + '℃ で表示されます。'
-      : 'パラゴン使用時は自動で +2℃ になります。';
 
     var r = beansRange();
     $('#in-beans').value = String(input.beans);
@@ -1598,19 +1600,17 @@ button { touch-action: manipulation; }
     return w;
   }
 
-  /* 湯温：合算値を大きく、内訳を小さく（編集不可） */
+  /* 湯温：画面1で選んだ値をそのまま出す（編集不可） */
   function tempReadout(r) {
-    var w = el('div', 'readout' + (r.paragon ? ' bonus' : ''));
+    var w = el('div', 'readout');
     w.appendChild(el('div', 'big', r.temp + '<small>℃</small>'));
-    w.appendChild(el('div', 'sub', r.paragon
-      ? r.baseTemp + '℃ ＋ パラゴン ' + RULES.paragonTempBonus + '℃'
-      : 'パラゴン未使用'));
     return w;
   }
 
   /* 挽き目：加算があるときだけ内訳を出す（編集不可） */
   function grindReadout(r) {
     var parts = [];
+    if (r.paragon && RULES.paragonGrindBonus !== 0) parts.push('パラゴン ' + signed(RULES.paragonGrindBonus));
     if (r.ethiopia && RULES.ethiopiaGrindBonus !== 0) parts.push('エチオピア ' + signed(RULES.ethiopiaGrindBonus));
     if (r.sibarist && RULES.sibaristGrindBonus !== 0) parts.push('Sibarist ' + signed(RULES.sibaristGrindBonus));
     var w = el('div', 'readout' + (parts.length ? ' bonus' : ''));
@@ -1924,6 +1924,7 @@ button { touch-action: manipulation; }
           { label: '平底 · 5投',    ref: SPLITS.flat[5],    fields: pctFields(SPLITS.flat[5]),    sum: true },
           { label: 'SWITCH · 3投',  ref: SPLITS.immerse[3], fields: pctFields(SPLITS.immerse[3]), sum: true },
           { label: 'Orea Z1 · 4投', ref: SPLITS.z1[4],      fields: pctFields(SPLITS.z1[4]),      sum: true },
+          { label: 'Orea Z1（均等注湯）· 4投', ref: SPLITS.z1even[4], fields: pctFields(SPLITS.z1even[4]), sum: true },
           { label: 'Pinn · 3投',    ref: SPLITS.pinn[3],    fields: pctFields(SPLITS.pinn[3], 0.1), sum: true }
         ] },
 
@@ -1960,7 +1961,7 @@ button { touch-action: manipulation; }
 
       { label: 'その他', sub: 'Misc',
         rows: [
-          { label: 'パラゴン加算',     ref: RULES, fields: [fld('paragonTempBonus', '℃', 0, 10, 1)] },
+          { label: 'パラゴン加算',     ref: RULES, fields: [fld('paragonGrindBonus', '挽き目', 0, 3, 0.1)] },
           { label: 'エチオピア加算',   ref: RULES, fields: [fld('ethiopiaGrindBonus', '挽き目', 0, 3, 0.1)] },
           { label: 'Sibarist加算',    ref: RULES, fields: [fld('sibaristGrindBonus', '挽き目', -3, 0, 0.1)] },
           { label: '21g以降の加算',   ref: RULES, fields: [fld('timingTier', '秒', 0, 60, 5)] }
@@ -2186,6 +2187,7 @@ button { touch-action: manipulation; }
     row('Orea Z1',           z1Only(function (d) { return ramp(GRIND.z1, d).toFixed(1); }));
     row('SWITCH',            function (d) { return ramp(GRIND.immerse, d).toFixed(1); });
     row('Pinn',              pinnOnly(function (d) { return ramp(GRIND.pinn, d).toFixed(1); }));
+    row('パラゴン加算',        function ()  { return signed(RULES.paragonGrindBonus); });
     row('エチオピア加算',      function ()  { return signed(RULES.ethiopiaGrindBonus); });
     row('Sibarist加算',       function ()  { return signed(RULES.sibaristGrindBonus); });
 
