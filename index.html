@@ -1102,7 +1102,7 @@ button { touch-action: manipulation; }
     { id: 'flat-flat',    label: 'フラット',            split: 'flat',    grind: 'balance',  timing: 'A' },
     { id: 'flat-z1',      label: 'Sibarist（Z1）',      split: 'z1',      grind: 'z1',       timing: 'A',    ratio: 'z1' },
     { id: 'pinn',         label: 'Pinn 公式レシピ',      split: 'pinn',    grind: 'pinn',     timing: 'pinn', ratio: 'pinn' },
-    { id: 'ufo',          label: '均等注湯',             split: 'ufo',     grind: 'ufo',      timing: 'A',    ratio: 'z1' }
+    { id: 'ufo',          label: '均等注湯',             split: 'ufo',     grind: 'ufo',      timing: 'A',    ratio: 'ufo' }
   ];
 
   /* 各投の配分（％） */
@@ -1120,8 +1120,9 @@ button { touch-action: manipulation; }
   var RATIO = {
     hot:  { base: 15.4, step: 0.1, cap: 16.5 },
     ice:  { base: 15.2, step: 0.1, cap: 16.0 },
-    z1:   { base: 15.1, step: 0.2, cap: 16.0 },  // Orea Z1 / UFO
-    pinn: { base: 14.8, step: 0.12, cap: 15.5 }  // Pinn
+    z1:   { base: 15.1, step: 0.2, cap: 16.0 },  // Orea Z1
+    pinn: { base: 14.8, step: 0.12, cap: 15.5 }, // Pinn
+    ufo:  { base: 14.0, step: 0.2, cap: 15.0 }   // UFO
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
@@ -1175,7 +1176,7 @@ button { touch-action: manipulation; }
   var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 16.9, pours: 4 };
   /* Pinn の制約：豆量 10〜16.9g（最大 16g、Z1 と同じく 16g 台まで許容） / 3投のみ / ホットのみ */
   var PINN = { dripper: 'pinn', min: 10, max: 16.9, pours: 3 };
-  /* UFO の制約：豆量は制限なし / 4投のみ / ホットのみ（レシオは Z1 と共通でアイス用がない） */
+  /* UFO の制約：豆量は制限なし / 4投のみ / ホットのみ（専用レシオにアイス用がない） */
   var UFO = { dripper: 'ufo', pours: 4 };
   var DOSE = { min: 10, max: 35 };
   var DOSE_PRESETS = [10, 15, 20, 25, 30];
@@ -1328,7 +1329,7 @@ button { touch-action: manipulation; }
   function timingTier(beans)   { return beans < 21 ? 0 : 1; }                     // 10〜20 / 21〜
 
   /* Orea Z1 は 16g 台まで使えるが、目標は豆量によらず 10〜15g の帯のまま。
-     UFO はレシオこそ Z1 と共通だが、豆量の制限がないので通常の豆量帯を使う。 */
+     UFO は豆量の制限がないので通常の豆量帯を使う。 */
   function drawdownFor(cat, beans) {
     if (cat.id === 'pinn') return DRAWDOWN_PINN;
     if (cat.id === 'flat-z1') return DRAWDOWN[0];
@@ -1907,8 +1908,9 @@ button { touch-action: manipulation; }
         rows: [
           { label: 'ホット',  ref: RATIO.hot, fields: rampFields(['base', 'step', 'cap']) },
           { label: 'アイス',  ref: RATIO.ice, fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'Orea Z1 / UFO', ref: RATIO.z1, fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'Pinn',    ref: RATIO.pinn, fields: rampFields(['base', 'step', 'cap']) }
+          { label: 'Orea Z1', ref: RATIO.z1,  fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'Pinn',    ref: RATIO.pinn, fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'UFO',     ref: RATIO.ufo,  fields: rampFields(['base', 'step', 'cap']) }
         ] },
 
       { label: '挽き目', sub: 'Grind',
@@ -2181,14 +2183,14 @@ button { touch-action: manipulation; }
     row('アイス',  function (d) { return ramp(RATIO.ice, d).toFixed(1); });
     row('Orea Z1', z1Only(function (d) { return ramp(RATIO.z1, d).toFixed(1); }));
     row('Pinn',    pinnOnly(function (d) { return ramp(RATIO.pinn, d).toFixed(1); }));
-    row('UFO',     function (d) { return ramp(RATIO.z1, d).toFixed(1); });
+    row('UFO',     function (d) { return ramp(RATIO.ufo, d).toFixed(1); });
 
     group('総湯量');
     row('ホット',  function (d) { return Math.round(d * ramp(RATIO.hot, d)) + ' g'; });
     row('アイス',  function (d) { return Math.round(d * ramp(RATIO.ice, d)) + ' g'; });
     row('Orea Z1', z1Only(function (d) { return Math.round(d * ramp(RATIO.z1, d)) + ' g'; }));
     row('Pinn',    pinnOnly(function (d) { return Math.round(d * ramp(RATIO.pinn, d)) + ' g'; }));
-    row('UFO',     function (d) { return Math.round(d * ramp(RATIO.z1, d)) + ' g'; });
+    row('UFO',     function (d) { return Math.round(d * ramp(RATIO.ufo, d)) + ' g'; });
 
     group('挽き目');
     row('高速 / ウェーブ',    function (d) { return ramp(GRIND.fast, d).toFixed(1); });
