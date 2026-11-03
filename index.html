@@ -3,7 +3,7 @@
 /* ============================================================
    Design tokens
    Ground: cool lab-paper / charcoal (blue-biased neutrals)
-   Accent: follows the brew — amber for HOT, cyan for ICE
+   Accent: follows the dripper shape — amber for 円錐, blue for 平底
    ============================================================ */
 :root {
   --bg:        #EEF0F3;
@@ -15,15 +15,15 @@
   --ink-2:     #565D68;
   --ink-3:     #868D99;
 
-  --hot:        #C07208;
-  --hot-on:     #FFFFFF;
-  --hot-text:   #935703;
-  --hot-soft:   #F7E8CE;
+  --cone:       #C07208;
+  --cone-on:    #FFFFFF;
+  --cone-text:  #935703;
+  --cone-soft:  #F7E8CE;
 
-  --ice:        #0B6BA8;
-  --ice-on:     #FFFFFF;
-  --ice-text:   #07548A;
-  --ice-soft:   #D9E8F5;
+  --flat:       #0B6BA8;
+  --flat-on:    #FFFFFF;
+  --flat-text:  #07548A;
+  --flat-soft:  #D9E8F5;
 
   --shadow: 0 1px 2px rgba(21,24,29,.06), 0 6px 18px rgba(21,24,29,.06);
 }
@@ -38,15 +38,15 @@
     --ink-2:     #98A0AC;
     --ink-3:     #6E7784;
 
-    --hot:        #F0A63C;
-    --hot-on:     #1A1204;
-    --hot-text:   #F0A63C;
-    --hot-soft:   #2E2313;
+    --cone:       #F0A63C;
+    --cone-on:    #1A1204;
+    --cone-text:  #F0A63C;
+    --cone-soft:  #2E2313;
 
-    --ice:        #56AFF0;
-    --ice-on:     #04202F;
-    --ice-text:   #56AFF0;
-    --ice-soft:   #0F2739;
+    --flat:       #56AFF0;
+    --flat-on:    #04202F;
+    --flat-text:  #56AFF0;
+    --flat-soft:  #0F2739;
 
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
   }
@@ -54,15 +54,15 @@
 :root[data-theme="light"] {
   --bg:#EEF0F3; --surface:#FFFFFF; --surface-2:#E4E7EC; --line:#D3D8E0; --line-2:#BFC6D1;
   --ink:#15181D; --ink-2:#565D68; --ink-3:#868D99;
-  --hot:#C07208; --hot-on:#FFFFFF; --hot-text:#935703; --hot-soft:#F7E8CE;
-  --ice:#0B6BA8; --ice-on:#FFFFFF; --ice-text:#07548A; --ice-soft:#D9E8F5;
+  --cone:#C07208; --cone-on:#FFFFFF; --cone-text:#935703; --cone-soft:#F7E8CE;
+  --flat:#0B6BA8; --flat-on:#FFFFFF; --flat-text:#07548A; --flat-soft:#D9E8F5;
   --shadow: 0 1px 2px rgba(21,24,29,.06), 0 6px 18px rgba(21,24,29,.06);
 }
 :root[data-theme="dark"] {
   --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --line:#2A313A; --line-2:#3A434F;
   --ink:#EDF0F4; --ink-2:#98A0AC; --ink-3:#6E7784;
-  --hot:#F0A63C; --hot-on:#1A1204; --hot-text:#F0A63C; --hot-soft:#2E2313;
-  --ice:#56AFF0; --ice-on:#04202F; --ice-text:#56AFF0; --ice-soft:#0F2739;
+  --cone:#F0A63C; --cone-on:#1A1204; --cone-text:#F0A63C; --cone-soft:#2E2313;
+  --flat:#56AFF0; --flat-on:#04202F; --flat-text:#56AFF0; --flat-soft:#0F2739;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
 }
 
@@ -98,8 +98,8 @@ button { touch-action: manipulation; }
 }
 /* iPhone 16 Pro Max logical viewport: 440 x 956 pt */
 .app {
-  --accent: var(--hot); --on-accent: var(--hot-on);
-  --accent-text: var(--hot-text); --accent-soft: var(--hot-soft);
+  --accent: var(--cone); --on-accent: var(--cone-on);
+  --accent-text: var(--cone-text); --accent-soft: var(--cone-soft);
   position: relative;
   width: 100%;
   max-width: 440px;
@@ -109,9 +109,9 @@ button { touch-action: manipulation; }
   display: flex;
   flex-direction: column;
 }
-.app[data-brew="ice"] {
-  --accent: var(--ice); --on-accent: var(--ice-on);
-  --accent-text: var(--ice-text); --accent-soft: var(--ice-soft);
+.app[data-shape="flat"] {
+  --accent: var(--flat); --on-accent: var(--flat-on);
+  --accent-text: var(--flat-text); --accent-soft: var(--flat-soft);
 }
 /* Desktop preview: show the phone silhouette */
 @media (min-width: 520px) and (min-height: 700px) {
@@ -647,7 +647,7 @@ button { touch-action: manipulation; }
   color: var(--ink);
 }
 .time-step .sq:active { background: var(--line); }
-/* 注湯時間は累計湯量（.cum-v）と同じ大きさ。色は抽出タイプ連動（ホット＝オレンジ／アイス＝ブルー）。 */
+/* 注湯時間は累計湯量（.cum-v）と同じ大きさ。色はドリッパーの形に連動（円錐＝オレンジ／平底＝ブルー）。 */
 .time-step .t {
   min-width: 92px;
   text-align: center;
@@ -735,40 +735,46 @@ button { touch-action: manipulation; }
   letter-spacing: .08em;
 }
 
-/* ---------- numbers (screen 3) ---------- */
+/* ---------- numbers (screen 3) ----------
+   豆量5列を画面幅に収めるため、文字と余白を詰めている。
+   項目名は必要なら折り返し、落ちきり目標は最短／最長を2行に分ける。 */
 .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .tbl {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: 13px;
 }
 .tbl th, .tbl td {
-  padding: 7px 8px;
+  padding: 7px 5px;
   border-top: 1px solid var(--line);
   text-align: right;
   white-space: nowrap;
 }
+.tbl th:first-child, .tbl td:first-child { padding-left: 10px; }
+.tbl th:last-child, .tbl td:last-child { padding-right: 10px; }
 .tbl thead th {
   border-top: 0;
   padding-top: 10px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: .08em;
+  letter-spacing: .04em;
   color: var(--ink-3);
 }
 .tbl .rowhead {
   text-align: left;
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  line-height: 1.3;
+  white-space: normal;
   color: var(--ink-2);
 }
 .tbl thead .rowhead { font-family: var(--font-num); }
 .tbl .grouphead td {
   text-align: left;
-  padding: 9px 8px 6px;
+  padding: 9px 10px 6px;
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 700;
@@ -790,7 +796,7 @@ button { touch-action: manipulation; }
   font-size: 13px;
   color: var(--ink-3);
 }
-.tune-sum.bad { color: var(--hot-text); font-weight: 700; }
+.tune-sum.bad { color: var(--cone-text); font-weight: 700; }
 .tune-fields { display: flex; flex-wrap: wrap; gap: 8px; }
 .fld { display: flex; flex-direction: column; gap: 3px; }
 .fld > span {
@@ -865,7 +871,7 @@ button { touch-action: manipulation; }
 </style>
 
 <div class="stage">
-<div class="app" id="app" data-brew="hot">
+<div class="app" id="app" data-shape="cone">
 
   <header class="topbar">
     <h1>ドリップレシピ<span class="sub" id="crumb">Setup</span></h1>
@@ -878,14 +884,6 @@ button { touch-action: manipulation; }
     <!-- ============ 1. INPUT ============ -->
     <section class="screen is-active" id="screen-input" aria-label="入力">
       <div class="scroll">
-
-        <div class="sec">
-          <div class="sec-head"><h2>Brew</h2><span class="jp">抽出タイプ</span></div>
-          <div class="seg" id="seg-brew" role="group" aria-label="抽出タイプ">
-            <button type="button" data-v="hot" aria-pressed="true">ホット<span class="en">Hot</span></button>
-            <button type="button" data-v="ice" aria-pressed="false">アイス<span class="en">Iced</span></button>
-          </div>
-        </div>
 
         <div class="sec">
           <div class="sec-head"><h2>Dripper</h2><span class="jp">ドリッパー</span></div>
@@ -918,6 +916,15 @@ button { touch-action: manipulation; }
             </button>
           </div>
           <p class="sec-note" id="tool-note"></p>
+        </div>
+
+        <div class="sec">
+          <div class="sec-head"><h2>Grind × Ratio</h2><span class="jp">挽き目とレシオ</span></div>
+          <div class="seg" id="seg-profile" role="group" aria-label="挽き目とレシオ">
+            <button type="button" data-v="coarse" aria-pressed="true">粗め・低め<span class="en">Coarse · Low</span></button>
+            <button type="button" data-v="fine" aria-pressed="false">細かめ・高め<span class="en">Fine · High</span></button>
+          </div>
+          <p class="sec-note" id="profile-note"></p>
         </div>
 
         <div class="sec">
@@ -1075,7 +1082,6 @@ button { touch-action: manipulation; }
      以前の単独項目方式は git タグ backup-sibarist-paper に残してある。 */
   var PAPERS = [
     { id: 'cone',     name: '円錐',              shape: 'cone' },
-    { id: 'wave',     name: 'ウェーブ',           shape: 'flat' },
     { id: 'flat',     name: 'フラット',           shape: 'flat' },
     { id: 'sib-z1',   name: 'Sibarist（Z1）',     shape: 'flat' }
   ];
@@ -1084,25 +1090,27 @@ button { touch-action: manipulation; }
 
   /* ==========================================================
      レシピ分類
-     SWITCH ON → 浸漬系。Pinn → 公式レシピ。UFO → 均等注湯。
-     それ以外は 円錐＝ドリッパー種別 / 平底＝ペーパー で決まる。
+     SWITCH ON → 浸漬系。Orea Z1 → 専用レシピ。UFO → 均等注湯。
+     それ以外は 円錐 / 平底 の形で決まる。
      ========================================================== */
-  var CONE_FAST = ['v60', 'v60neo', 'flower'];
   var SWITCH_OK = ['v60', 'v60neo', 'orea-o1', 'orea-o2', 'orea-v4'];
 
-  /* 分類ごとに、配分（split）・挽き目（grind）・注湯時間（timing）の
-     どのルールを使うかを指す。3つのグループ分けは互いに独立している。
-     ratio を持つ分類は、ホット/アイスの共通レシオではなく専用のレシオを使う。
+  /* 分類ごとに、配分（split）・挽き目（grind）・レシオ（ratio）のどのルールを使うかを指す。
+     grind / ratio を持たない分類は、画面1で選んだ挽き目とレシオの組み合わせ（PROFILES）を使う。
+     注湯時間は浸漬系を除いて共通（TIMING）。
      *Prov = そのルールがまだ未指定で仮置きであることの印。 */
   var CATEGORIES = [
-    { id: 'immerse',      label: '浸漬系',             split: 'immerse', grind: 'immerse' },
-    { id: 'cone-fast',    label: '高速ドリッパー',      split: 'cone',    grind: 'fast',     timing: 'A' },
-    { id: 'cone-balance', label: 'バランスドリッパー',   split: 'cone',    grind: 'balance',  timing: 'A' },
-    { id: 'flat-wave',    label: 'ウェーブ',            split: 'flat',    grind: 'fast',     timing: 'B' },
-    { id: 'flat-flat',    label: 'フラット',            split: 'flat',    grind: 'balance',  timing: 'A' },
-    { id: 'flat-z1',      label: 'Sibarist（Z1）',      split: 'z1',      grind: 'z1',       timing: 'A',    ratio: 'z1' },
-    { id: 'pinn',         label: 'Pinn 公式レシピ',      split: 'pinn',    grind: 'pinn',     timing: 'pinn', ratio: 'pinn' },
-    { id: 'ufo',          label: '均等注湯',             split: 'ufo',     grind: 'ufo',      timing: 'A',    ratio: 'ufo' }
+    { id: 'immerse', label: '浸漬系',         split: 'immerse' },
+    { id: 'cone',    label: '標準',           split: 'cone' },
+    { id: 'flat',    label: '標準',           split: 'flat' },
+    { id: 'flat-z1', label: 'Sibarist（Z1）', split: 'z1',      grind: 'z1', ratio: 'z1' },
+    { id: 'ufo',     label: '均等注湯',        split: 'ufo' }
+  ];
+
+  /* 挽き目とレシオの組み合わせ。id は RATIO / GRIND のキーと同じ。 */
+  var PROFILES = [
+    { id: 'coarse', label: '粗め・低め' },     // 挽き目 粗め ＋ レシオ 低め
+    { id: 'fine',   label: '細かめ・高め' }    // 挽き目 細かめ ＋ レシオ 高め
   ];
 
   /* 各投の配分（％） */
@@ -1111,38 +1119,28 @@ button { touch-action: manipulation; }
     flat:    { 4: [25, 25, 25, 25], 5: [20, 20, 20, 20, 20] },
     immerse: { 3: [20, 40, 40] },   /* SWITCH：3投固定 */
     z1:      { 4: [25, 30, 25, 20] },
-    ufo:     { 4: [25, 25, 25, 25] },   /* UFO：4投固定・均等注湯 */
-    /* Pinn：3投固定 */
-    pinn:    { 3: [15, 40, 45] }
+    ufo:     { 4: [25, 25, 25, 25] }    /* UFO：4投固定・均等注湯 */
   };
 
-  /* ブリューレシオ：10g を起点に 1g ごとに step ずつ増やし、cap で頭打ち */
+  /* ブリューレシオ：10g を起点に 1g ごとに step ずつ増やし、cap で頭打ち。
+     粗め・低め／細かめ・高め は 15g と 25g の目標を通る直線（頭打ちなし）。 */
   var RATIO = {
-    hot:  { base: 15.4, step: 0.1, cap: 16.5 },
-    ice:  { base: 15.2, step: 0.1, cap: 16.0 },
-    z1:   { base: 15.1, step: 0.2, cap: 16.0 },  // Orea Z1
-    pinn: { base: 14.8, step: 0.12, cap: 15.5 }, // Pinn
-    ufo:  { base: 14.0, step: 0.2, cap: 15.0 }   // UFO
+    coarse:  { base: 14.25, step: 0.05, cap: 99 },   // 粗め・低め   15g: 14.5 / 25g: 15.0
+    fine:    { base: 15.75, step: 0.05, cap: 99 },   // 細かめ・高め 15g: 16.0 / 25g: 16.5
+    z1:      { base: 15.1,  step: 0.2,  cap: 16.0 }  // Orea Z1
   };
 
   /* 挽き目（Varia VS6 + Kilonova DLC）：10g を起点に 1g ごとに step。
      knee を置くと、そこを超えたぶん（knee+1g 以降）が step2 になる。 */
   var GRIND = {
-    fast:     { base: 11.1, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // 高速 / ウェーブ
-    balance:  { base: 11.8, step: 0.1,  knee: 20, step2: 0.05, cap: 15.0 },                    // バランス / フラット
-    z1:       { base: 10.0, step: 0.4,  cap: 99 },                                             // Orea Z1
-    immerse:  { base: 11.5, step: 0.1,  knee: 20, step2: 0.05, cap: 13.0 },                    // SWITCH（balance と同じ傾き）
-    pinn:     { base: 10.0, step: 0.4,  cap: 13.0 },                                           // Pinn
-    ufo:      { base: 12.0, step: 0.4,  cap: 99 }                                              // UFO（Orea Z1 と同じ傾き）
+    coarse:   { base: 13.5, step: 0.1,  cap: 99 },                                             // 粗め・低め   15g: 14 / 25g: 15
+    fine:     { base: 11.5, step: 0.1,  cap: 99 },                                             // 細かめ・高め 15g: 12 / 25g: 13
+    z1:       { base: 10.0, step: 0.4,  cap: 99 }                                              // Orea Z1
   };
 
   /* 注湯時間（秒・スタートからの累計）。10〜20g が基準で、
-     21g以降は2投目以降に各 +5秒（1投目は常に 0:00）。 */
-  var TIMING = {
-    A: { 4: [0, 30, 65, 100], 5: [0, 30, 60, 85, 105] },  // フラット / 高速 / バランス / Z1 / UFO
-    B: { 4: [0, 30, 60,  90], 5: [0, 30, 60, 80, 100] },  // ウェーブ
-    pinn: { 3: [0, 30, 55] }                               // Pinn 公式レシピ
-  };
+     21g以降は2投目以降に各 +5秒（1投目は常に 0:00）。浸漬系以外で共通。 */
+  var TIMING = { 4: [0, 30, 65, 100], 5: [0, 30, 60, 85, 105] };
 
   /* SWITCH（浸漬系）の固定スケジュール：3投固定、スイッチの開閉と連動。豆量による調整はない。
      閉じる(0:00) → 1投目(0:00) → 開放(0:30) → 2投目(0:40) → 閉じる(1:30) → 3投目(1:30) → 開放(2:30) */
@@ -1162,8 +1160,6 @@ button { touch-action: manipulation; }
     { min: 180, max: 200 },   // 16〜20g : 3:00 – 3:20
     { min: 210, max: 240 }    // 21g以降 : 3:30 – 4:00
   ];
-  /* Pinn は公式レシピの目標をそのまま使う（豆量帯によらない） */
-  var DRAWDOWN_PINN = { min: 90, max: 100 };   // 1:30 – 1:40
 
   var RULES = {
     paragonGrindBonus: 0.4,  // パラゴン：挽き目を粗くする
@@ -1172,11 +1168,9 @@ button { touch-action: manipulation; }
     sibaristGrindBonus: -0.4 // Sibarist：透過が非常に速いペーパーなので挽き目を細かくする
   };
 
-  /* Orea Z1 の制約：豆量 10〜16.9g（16g 狙いで計量して 16.2g などになっても使えるよう、16g 台まで許容） / 4投のみ / ホットのみ */
+  /* Orea Z1 の制約：豆量 10〜16.9g（16g 狙いで計量して 16.2g などになっても使えるよう、16g 台まで許容） / 4投のみ */
   var Z1 = { dripper: 'orea-z1', paper: 'sib-z1', min: 10, max: 16.9, pours: 4 };
-  /* Pinn の制約：豆量 10〜16.9g（最大 16g、Z1 と同じく 16g 台まで許容） / 3投のみ / ホットのみ */
-  var PINN = { dripper: 'pinn', min: 10, max: 16.9, pours: 3 };
-  /* UFO の制約：豆量は制限なし / 4投のみ / ホットのみ（専用レシオにアイス用がない） */
+  /* UFO の制約：豆量は制限なし / 4投のみ */
   var UFO = { dripper: 'ufo', pours: 4 };
   var DOSE = { min: 10, max: 35 };
   var DOSE_PRESETS = [10, 15, 20, 25, 30];
@@ -1185,7 +1179,7 @@ button { touch-action: manipulation; }
      STATE
      ========================================================== */
   var input = {
-    brew: 'hot',
+    profile: 'coarse',
     dripper: 'v60',
     paper: 'cone',
     tools: { paragon: false, switch: false, ethiopia: false, sibarist: false },
@@ -1233,16 +1227,13 @@ button { touch-action: manipulation; }
      CONSTRAINTS
      ========================================================== */
   function isZ1(dripperId) { return dripperId === Z1.dripper; }
-  function isPinn(dripperId) { return dripperId === PINN.dripper; }
   function isUfo(dripperId) { return dripperId === UFO.dripper; }
   function switchUsable(dripperId) { return SWITCH_OK.indexOf(dripperId) >= 0; }
   function beansRange() {
     if (isZ1(input.dripper)) return [Z1.min, Z1.max];
-    if (isPinn(input.dripper)) return [PINN.min, PINN.max];
     return [DOSE.min, DOSE.max];
   }
   function poursUsable(n) { return !(isZ1(input.dripper) && n !== Z1.pours); }
-  function iceUsable() { return !isZ1(input.dripper) && !isPinn(input.dripper) && !isUfo(input.dripper); }
   /* Z1 の専用フィルターはもともと Sibarist なので、加算を重ねない */
   function sibaristUsable(dripperId) { return !isZ1(dripperId); }
 
@@ -1259,7 +1250,6 @@ button { touch-action: manipulation; }
     if (byId(DRIPPERS, input.dripper).pending) input.dripper = 'v60';
     if (!switchUsable(input.dripper)) input.tools.switch = false;
     if (!sibaristUsable(input.dripper)) input.tools.sibarist = false;
-    if (!iceUsable()) input.brew = 'hot';
     if (!paperUsable(byId(PAPERS, input.paper), input.dripper)) {
       for (var i = 0; i < PAPERS.length; i++) {
         if (paperUsable(PAPERS[i], input.dripper)) { input.paper = PAPERS[i].id; break; }
@@ -1267,7 +1257,7 @@ button { touch-action: manipulation; }
     }
     if (!poursUsable(input.pours)) input.pours = Z1.pours;
     var r = beansRange();
-    /* 上限超えは整数gに寄せる（Z1 / Pinn は上限 16.9g だが、狙いは 16g） */
+    /* 上限超えは整数gに寄せる（Z1 は上限 16.9g だが、狙いは 16g） */
     input.beans = input.beans > r[1] ? Math.floor(r[1]) : Math.max(r[0], input.beans);
   }
 
@@ -1276,20 +1266,9 @@ button { touch-action: manipulation; }
      ========================================================== */
   function resolveCategory(inp) {
     if (inp.tools.switch && switchUsable(inp.dripper)) return byId(CATEGORIES, 'immerse');
-    if (isPinn(inp.dripper)) return byId(CATEGORIES, 'pinn');
     if (isUfo(inp.dripper)) return byId(CATEGORIES, 'ufo');
-    var d = byId(DRIPPERS, inp.dripper);
-    var id;
-    if (d.shape === 'cone') {
-      id = CONE_FAST.indexOf(inp.dripper) >= 0 ? 'cone-fast' : 'cone-balance';
-    } else if (isZ1(inp.dripper)) {
-      id = 'flat-z1';
-    } else if (inp.paper === 'wave') {
-      id = 'flat-wave';
-    } else {
-      id = 'flat-flat';
-    }
-    return byId(CATEGORIES, id);
+    if (isZ1(inp.dripper)) return byId(CATEGORIES, 'flat-z1');
+    return byId(CATEGORIES, byId(DRIPPERS, inp.dripper).shape);
   }
 
   /* 10g を起点に 1g ごとに step、cap で頭打ち。
@@ -1307,10 +1286,10 @@ button { touch-action: manipulation; }
     return round1(Math.round(Math.min(t.cap, v) * 100) / 100);
   }
 
-  function ratioFor(cat, beans, iced) {
-    return ramp(cat.ratio ? RATIO[cat.ratio] : (iced ? RATIO.ice : RATIO.hot), beans);
-  }
-  function grindFor(cat, beans) { return ramp(GRIND[cat.grind], beans); }
+  /* Orea Z1 は専用の挽き目・レシオ。それ以外（SWITCH を含む）は選んだ組み合わせを使う。 */
+  function usesProfile(cat) { return !cat.ratio; }
+  function ratioFor(cat, profile, beans) { return ramp(RATIO[cat.ratio || profile], beans); }
+  function grindFor(cat, profile, beans) { return ramp(GRIND[cat.grind || profile], beans); }
 
   /* 挽き目の加算。狙って上限を超える／下回るので、ramp の cap のあとに足す。
      パラゴン：湯温は上げず、挽き目を粗くして調整する。
@@ -1331,7 +1310,6 @@ button { touch-action: manipulation; }
   /* Orea Z1 は 16g 台まで使えるが、目標は豆量によらず 10〜15g の帯のまま。
      UFO は豆量の制限がないので通常の豆量帯を使う。 */
   function drawdownFor(cat, beans) {
-    if (cat.id === 'pinn') return DRAWDOWN_PINN;
     if (cat.id === 'flat-z1') return DRAWDOWN[0];
     return DRAWDOWN[drawdownTier(beans)];
   }
@@ -1339,14 +1317,13 @@ button { touch-action: manipulation; }
   /* 投数が決まっている分類（投数の切り替えを出さない）。それ以外は null。 */
   function fixedPours(cat) {
     if (cat.split === 'immerse') return 3;
-    if (cat.split === 'pinn') return PINN.pours;
     if (cat.split === 'ufo') return UFO.pours;
     return null;
   }
 
   function timesFor(cat, n, beans) {
     if (cat.split === 'immerse') return SWITCH_SCHEDULE.pours.slice();
-    var base = (TIMING[cat.timing] || TIMING.A)[n];
+    var base = TIMING[n];
     if (!base) return null;
     var add = timingTier(beans) * RULES.timingTier;
     return base.map(function (t, i) { return i === 0 ? 0 : t + add; });
@@ -1365,13 +1342,13 @@ button { touch-action: manipulation; }
 
   function buildRecipe(inp) {
     var cat = resolveCategory(inp);
-    var iced = inp.brew === 'ice';
     var n = isZ1(inp.dripper) ? Z1.pours : (fixedPours(cat) || inp.pours);
-    var water = Math.round(inp.beans * ratioFor(cat, inp.beans, iced));
+    var profile = usesProfile(cat) ? inp.profile : null;
+    var water = Math.round(inp.beans * ratioFor(cat, profile, inp.beans));
 
     return {
       beans: inp.beans,
-      brew: inp.brew,
+      profile: profile,
       paragon: inp.tools.paragon,
       immersion: inp.tools.switch,
       ethiopia: inp.tools.ethiopia,
@@ -1380,8 +1357,8 @@ button { touch-action: manipulation; }
       paper: inp.paper,
       category: cat.id,
       temp: inp.temp,
-      baseGrind: grindFor(cat, inp.beans),
-      grind: round1(grindFor(cat, inp.beans) + grindBonus(inp)),
+      baseGrind: grindFor(cat, profile, inp.beans),
+      grind: round1(grindFor(cat, profile, inp.beans) + grindBonus(inp)),
       drawdown: drawdownFor(cat, inp.beans),
       pours: distribute(water, SPLITS[cat.split][n], timesFor(cat, n, inp.beans))
     };
@@ -1427,12 +1404,7 @@ button { touch-action: manipulation; }
 
   function renderInput() {
     reconcile();
-    $('#app').dataset.brew = input.brew;
-
-    Array.prototype.forEach.call($('#seg-brew').children, function (b) {
-      b.setAttribute('aria-pressed', String(b.dataset.v === input.brew));
-      b.disabled = (b.dataset.v === 'ice') && !iceUsable();
-    });
+    $('#app').dataset.shape = byId(DRIPPERS, input.dripper).shape;
 
     buildGroups($('#dripper-groups'), DRIPPERS, true,
       function (x) { return x.id === input.dripper; },
@@ -1471,6 +1443,19 @@ button { touch-action: manipulation; }
       + ' Sibarist は透過が非常に速いペーパーなので、挽き目を '
       + signed(RULES.sibaristGrindBonus) + ' します（Orea Z1 は専用フィルターのため対象外）。';
 
+    /* 挽き目とレシオ：Z1 は専用値なので選べない。選べるときは 15g / 25g の目安を出す。 */
+    var profileOk = usesProfile(resolveCategory(input));
+    Array.prototype.forEach.call($('#seg-profile').children, function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.v === input.profile));
+      b.disabled = !profileOk;
+    });
+    $('#profile-note').innerHTML = profileOk
+      ? [15, 25].map(function (g) {
+          return g + 'g：挽き目 ' + ramp(GRIND[input.profile], g).toFixed(1)
+            + '・レシオ ' + ramp(RATIO[input.profile], g).toFixed(1);
+        }).join('<br>')
+      : 'Orea Z1 は専用の挽き目・レシオを使うので対象外です。';
+
     Array.prototype.forEach.call($('#seg-temp').children, function (b) {
       b.setAttribute('aria-pressed', String(Number(b.dataset.v) === input.temp));
     });
@@ -1491,13 +1476,6 @@ button { touch-action: manipulation; }
     });
   }
 
-  $('#seg-brew').addEventListener('click', function (e) {
-    var b = e.target.closest('button');
-    if (!b || b.disabled) return;
-    input.brew = b.dataset.v;
-    renderInput();
-  });
-
   $('#dripper-groups').addEventListener('click', function (e) {
     var b = e.target.closest('.chip');
     if (!b || b.disabled) return;
@@ -1516,6 +1494,13 @@ button { touch-action: manipulation; }
     var b = e.target.closest('.tool');
     if (!b || b.disabled) return;
     input.tools[b.dataset.tool] = !input.tools[b.dataset.tool];
+    renderInput();
+  });
+
+  $('#seg-profile').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    input.profile = b.dataset.v;
     renderInput();
   });
 
@@ -1676,11 +1661,10 @@ button { touch-action: manipulation; }
   }
 
   function renderRecipe() {
-    $('#app').dataset.brew = recipe.brew;
-
     var cat = byId(CATEGORIES, recipe.category);
     var d = byId(DRIPPERS, recipe.dripper);
     var p = byId(PAPERS, recipe.paper);
+    $('#app').dataset.shape = d.shape;
     var water = totalWater();
     var ratio = recipe.beans > 0 ? water / recipe.beans : 0;
 
@@ -1690,9 +1674,9 @@ button { touch-action: manipulation; }
 
     var tags = $('#meta-tags');
     tags.innerHTML = '';
-    tags.appendChild(el('span', 'tag on', recipe.brew === 'ice' ? 'アイス' : 'ホット'));
     tags.appendChild(el('span', 'tag on',
       (d.shape === 'cone' ? '円錐' : '平底') + '・' + cat.label));
+    if (recipe.profile) tags.appendChild(el('span', 'tag on', byId(PROFILES, recipe.profile).label));
     tags.appendChild(el('span', 'tag', d.name));
     tags.appendChild(el('span', 'tag', p.name));
     if (recipe.paragon) tags.appendChild(el('span', 'tag on', 'パラゴン'));
@@ -1821,7 +1805,7 @@ button { touch-action: manipulation; }
 
     var fixed = ['豆量', 'ブリューレシオ', '湯温', '落ちきり目標'];
     var pending = [];
-    (GRIND[cat.grind].provisional ? pending : fixed).push('挽き目');
+    (GRIND[cat.grind || recipe.profile].provisional ? pending : fixed).push('挽き目');
     (cat.timingProv ? pending : fixed).push('注湯時間');
     (cat.splitProv  ? pending : fixed).push('配分％');
     var notice = $('#notice-text');
@@ -1837,14 +1821,14 @@ button { touch-action: manipulation; }
      spec が持つ ref は各定数オブジェクトそのものへの参照なので、
      ref[key] を書き換えるとレシピ計算にそのまま効く。
      ========================================================== */
-  var TABLE_DOSES = [10, 15, 20, 30];
+  var TABLE_DOSES = [10, 15, 20, 25, 30];
   var TUNE_STORE = 'drip-recipe/tuning-v1';
 
   /* 編集・保存の対象。ここに挙げたものだけが復元/リセットされる。 */
   function tuningModel() {
     return {
       RATIO: RATIO, GRIND: GRIND, SPLITS: SPLITS, TIMING: TIMING,
-      SWITCH_SCHEDULE: SWITCH_SCHEDULE, DRAWDOWN: DRAWDOWN, DRAWDOWN_PINN: DRAWDOWN_PINN,
+      SWITCH_SCHEDULE: SWITCH_SCHEDULE, DRAWDOWN: DRAWDOWN,
       RULES: RULES
     };
   }
@@ -1864,10 +1848,17 @@ button { touch-action: manipulation; }
   function saveTuning() {
     try { localStorage.setItem(TUNE_STORE, JSON.stringify(tuningModel())); } catch (e) {}
   }
+  /* 旧い保存値（ホット/アイス・Pinn・ウェーブがあった頃）のキーを今の名前に寄せる。
+     A は共通の注湯時間へ。挽き目とレシオは新しい組み合わせ（粗め・低め／細かめ・高め）に
+     置き換えたので引き継がない。 */
+  function migrateTuning(s) {
+    if (s.TIMING && s.TIMING.A) s.TIMING = s.TIMING.A;
+    return s;
+  }
   function loadTuning() {
     try {
       var raw = localStorage.getItem(TUNE_STORE);
-      if (raw) assignDeep(tuningModel(), JSON.parse(raw));
+      if (raw) assignDeep(tuningModel(), migrateTuning(JSON.parse(raw)));
     } catch (e) {}
   }
   function resetTuning() {
@@ -1904,24 +1895,20 @@ button { touch-action: manipulation; }
   function tuningGroups() {
     return [
       { label: 'ブリューレシオ', sub: 'Brew Ratio',
-        note: '10g を起点に 1g ごとに増え、上限で頭打ちになります。',
+        note: '10g を起点に 1g ごとに増え、上限で頭打ちになります。'
+          + '粗め・低め／細かめ・高め は 15g と 25g の目標を通る直線で、上限 99 は頭打ちなしの意味です。',
         rows: [
-          { label: 'ホット',  ref: RATIO.hot, fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'アイス',  ref: RATIO.ice, fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'Orea Z1', ref: RATIO.z1,  fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'Pinn',    ref: RATIO.pinn, fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'UFO',     ref: RATIO.ufo,  fields: rampFields(['base', 'step', 'cap']) }
+          { label: '粗め・低め',        ref: RATIO.coarse,  fields: rampFields(['base', 'step', 'cap']) },
+          { label: '細かめ・高め',      ref: RATIO.fine,    fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'Orea Z1',          ref: RATIO.z1,      fields: rampFields(['base', 'step', 'cap']) }
         ] },
 
       { label: '挽き目', sub: 'Grind',
-        note: '切替g までは ＋/1g、それを超えたぶんは 切替後/1g で増えます。',
+        note: 'レシオと同じく 10g を起点に 1g ごとに増えます。SWITCH も選んだ組み合わせを使います。',
         rows: [
-          { label: '高速 / ウェーブ',           ref: GRIND.fast,     fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
-          { label: 'バランス / フラット',        ref: GRIND.balance,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
-          { label: 'Orea Z1',                  ref: GRIND.z1,       fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'SWITCH（浸漬系）',          ref: GRIND.immerse,  fields: rampFields(['base', 'step', 'knee', 'step2', 'cap']) },
-          { label: 'Pinn',                     ref: GRIND.pinn,     fields: rampFields(['base', 'step', 'cap']) },
-          { label: 'UFO',                      ref: GRIND.ufo,      fields: rampFields(['base', 'step', 'cap']) }
+          { label: '粗め・低め',                ref: GRIND.coarse,   fields: rampFields(['base', 'step', 'cap']) },
+          { label: '細かめ・高め',              ref: GRIND.fine,     fields: rampFields(['base', 'step', 'cap']) },
+          { label: 'Orea Z1',                  ref: GRIND.z1,       fields: rampFields(['base', 'step', 'cap']) }
         ] },
 
       { label: '注湯の配分', sub: 'Split',
@@ -1933,18 +1920,14 @@ button { touch-action: manipulation; }
           { label: '平底 · 5投',    ref: SPLITS.flat[5],    fields: pctFields(SPLITS.flat[5]),    sum: true },
           { label: 'SWITCH · 3投',  ref: SPLITS.immerse[3], fields: pctFields(SPLITS.immerse[3]), sum: true },
           { label: 'Orea Z1 · 4投', ref: SPLITS.z1[4],      fields: pctFields(SPLITS.z1[4]),      sum: true },
-          { label: 'Pinn · 3投',    ref: SPLITS.pinn[3],    fields: pctFields(SPLITS.pinn[3], 0.1), sum: true },
           { label: 'UFO · 4投',     ref: SPLITS.ufo[4],     fields: pctFields(SPLITS.ufo[4]),     sum: true }
         ] },
 
       { label: '注湯時間', sub: 'Pour Timing',
         note: 'スタートからの累計秒。1投目は常に 0:00 なので変更できません。',
         rows: [
-          { label: 'A · 4投（フラット/高速/バランス/Z1/UFO）', ref: TIMING.A[4], fields: secFields(TIMING.A[4], true) },
-          { label: 'A · 5投',                            ref: TIMING.A[5], fields: secFields(TIMING.A[5], true) },
-          { label: 'B · 4投（ウェーブ）',        ref: TIMING.B[4], fields: secFields(TIMING.B[4], true) },
-          { label: 'B · 5投',                            ref: TIMING.B[5], fields: secFields(TIMING.B[5], true) },
-          { label: 'Pinn · 3投',                         ref: TIMING.pinn[3], fields: secFields(TIMING.pinn[3], true) }
+          { label: '4投', ref: TIMING[4], fields: secFields(TIMING[4], true) },
+          { label: '5投', ref: TIMING[5], fields: secFields(TIMING[5], true) }
         ] },
 
       { label: 'SWITCH スケジュール', sub: 'Immersion',
@@ -1960,12 +1943,11 @@ button { touch-action: manipulation; }
         ] },
 
       { label: '落ちきり目標', sub: 'Drawdown',
-        note: '豆量帯ごとの目標秒数。Orea Z1 は 16g 台でも 10〜15g の目標を、Pinn は豆量によらず専用の目標を使います。',
+        note: '豆量帯ごとの目標秒数。Orea Z1 は 16g 台でも 10〜15g の目標を使います。',
         rows: [
           { label: '10〜15g', ref: DRAWDOWN[0], fields: drawdownFields() },
           { label: '16〜20g', ref: DRAWDOWN[1], fields: drawdownFields() },
-          { label: '21g以降', ref: DRAWDOWN[2], fields: drawdownFields() },
-          { label: 'Pinn',    ref: DRAWDOWN_PINN, fields: drawdownFields() }
+          { label: '21g以降', ref: DRAWDOWN[2], fields: drawdownFields() }
         ] },
 
       { label: 'その他', sub: 'Misc',
@@ -2173,32 +2155,21 @@ button { touch-action: manipulation; }
     function z1Only(fn) {
       return function (d) { return (d < Z1.min || d > Z1.max) ? null : fn(d); };
     }
-    /* Pinn も 10〜16.9g 専用 */
-    function pinnOnly(fn) {
-      return function (d) { return (d < PINN.min || d > PINN.max) ? null : fn(d); };
-    }
 
     group('ブリューレシオ');
-    row('ホット',  function (d) { return ramp(RATIO.hot, d).toFixed(1); });
-    row('アイス',  function (d) { return ramp(RATIO.ice, d).toFixed(1); });
-    row('Orea Z1', z1Only(function (d) { return ramp(RATIO.z1, d).toFixed(1); }));
-    row('Pinn',    pinnOnly(function (d) { return ramp(RATIO.pinn, d).toFixed(1); }));
-    row('UFO',     function (d) { return ramp(RATIO.ufo, d).toFixed(1); });
+    row('粗め・低め',   function (d) { return ramp(RATIO.coarse, d).toFixed(1); });
+    row('細かめ・高め', function (d) { return ramp(RATIO.fine, d).toFixed(1); });
+    row('Orea Z1',     z1Only(function (d) { return ramp(RATIO.z1, d).toFixed(1); }));
 
     group('総湯量');
-    row('ホット',  function (d) { return Math.round(d * ramp(RATIO.hot, d)) + ' g'; });
-    row('アイス',  function (d) { return Math.round(d * ramp(RATIO.ice, d)) + ' g'; });
-    row('Orea Z1', z1Only(function (d) { return Math.round(d * ramp(RATIO.z1, d)) + ' g'; }));
-    row('Pinn',    pinnOnly(function (d) { return Math.round(d * ramp(RATIO.pinn, d)) + ' g'; }));
-    row('UFO',     function (d) { return Math.round(d * ramp(RATIO.ufo, d)) + ' g'; });
+    row('粗め・低め',   function (d) { return Math.round(d * ramp(RATIO.coarse, d)) + ' g'; });
+    row('細かめ・高め', function (d) { return Math.round(d * ramp(RATIO.fine, d)) + ' g'; });
+    row('Orea Z1',     z1Only(function (d) { return Math.round(d * ramp(RATIO.z1, d)) + ' g'; }));
 
     group('挽き目');
-    row('高速 / ウェーブ',    function (d) { return ramp(GRIND.fast, d).toFixed(1); });
-    row('バランス / フラット', function (d) { return ramp(GRIND.balance, d).toFixed(1); });
+    row('粗め・低め',         function (d) { return ramp(GRIND.coarse, d).toFixed(1); });
+    row('細かめ・高め',       function (d) { return ramp(GRIND.fine, d).toFixed(1); });
     row('Orea Z1',           z1Only(function (d) { return ramp(GRIND.z1, d).toFixed(1); }));
-    row('SWITCH',            function (d) { return ramp(GRIND.immerse, d).toFixed(1); });
-    row('Pinn',              pinnOnly(function (d) { return ramp(GRIND.pinn, d).toFixed(1); }));
-    row('UFO',               function (d) { return ramp(GRIND.ufo, d).toFixed(1); });
     row('パラゴン加算',        function ()  { return signed(RULES.paragonGrindBonus); });
     row('エチオピア加算',      function ()  { return signed(RULES.ethiopiaGrindBonus); });
     row('Sibarist加算',       function ()  { return signed(RULES.sibaristGrindBonus); });
@@ -2206,11 +2177,8 @@ button { touch-action: manipulation; }
     group('落ちきり目標');
     row('目標', function (d) {
       var w = DRAWDOWN[drawdownTier(d)];
-      return mmss(w.min) + '–' + mmss(w.max);
+      return mmss(w.min) + '–<br>' + mmss(w.max);
     });
-    row('Pinn', pinnOnly(function () {
-      return mmss(DRAWDOWN_PINN.min) + '–' + mmss(DRAWDOWN_PINN.max);
-    }));
 
     group('注湯時間');
     row('2投目以降の加算', function (d) { return '+' + (timingTier(d) * RULES.timingTier) + '秒'; });
