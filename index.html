@@ -1822,7 +1822,8 @@ button { touch-action: manipulation; }
      ref[key] を書き換えるとレシピ計算にそのまま効く。
      ========================================================== */
   var TABLE_DOSES = [10, 15, 20, 25, 30];
-  var TUNE_STORE = 'drip-recipe/tuning-v1';
+  var TUNE_STORE = 'drip-recipe/tuning-v2';      // 初期値と違う値だけを保存
+  var TUNE_STORE_V1 = 'drip-recipe/tuning-v1';   // 旧形式：全項目を丸ごと保存していた
 
   /* 編集・保存の対象。ここに挙げたものだけが復元/リセットされる。 */
   function tuningModel() {
@@ -1845,8 +1846,31 @@ button { touch-action: manipulation; }
     });
   }
 
+  /* 保存するのは初期値と違う値だけ。保存していない項目は毎回 index.html の初期値が使われるので、
+     コードの初期値を変えればそのまま反映される。
+     数値の配列（配分％・注湯時間など）は要素がそろって意味を持つので、丸ごと1つの値として扱う。 */
+  function isTuneUnit(v) {
+    return v === null || typeof v !== 'object'
+      || (Array.isArray(v) && v.every(function (x) { return x === null || typeof x !== 'object'; }));
+  }
+  function diffTuning(cur, def) {
+    if (isTuneUnit(cur) || !def || typeof def !== 'object') {
+      return JSON.stringify(cur) === JSON.stringify(def) ? undefined : cur;
+    }
+    var out = {}, any = false;
+    Object.keys(cur).forEach(function (k) {
+      var d = diffTuning(cur[k], def[k]);
+      if (d !== undefined) { out[k] = d; any = true; }
+    });
+    return any ? out : undefined;
+  }
+
   function saveTuning() {
-    try { localStorage.setItem(TUNE_STORE, JSON.stringify(tuningModel())); } catch (e) {}
+    try {
+      var diff = diffTuning(tuningModel(), TUNING_DEFAULTS);
+      if (diff) localStorage.setItem(TUNE_STORE, JSON.stringify(diff));
+      else localStorage.removeItem(TUNE_STORE);
+    } catch (e) {}
   }
   /* 旧い保存値（ホット/アイス・Pinn・ウェーブがあった頃）のキーを今の名前に寄せる。
      A は共通の注湯時間へ。挽き目とレシオは新しい組み合わせ（粗め・低め／細かめ・高め）に
@@ -1855,15 +1879,46 @@ button { touch-action: manipulation; }
     if (s.TIMING && s.TIMING.A) s.TIMING = s.TIMING.A;
     return s;
   }
+  /* 旧形式（tuning-v1）は保存した時点の初期値まで丸ごと残していたため、あとで index.html の
+     初期値を変えても古い値で上書きされていた。v1 から移すときは、今の初期値か下の「以前の版の
+     初期値」と同じ値を捨て、実際に画面3で変えた値だけを引き継ぐ。
+     （画面3ができた e593cc2 以降の各版の初期値のうち、今と違うもの） */
+  var OLD_DEFAULTS = {
+    'RATIO.coarse.base':        [14.25],
+    'RATIO.z1.base':            [15],
+    'GRIND.coarse.base':        [13.5],
+    'GRIND.coarse.step':        [0.1],
+    'GRIND.z1.step':            [0.3],
+    'SPLITS.z1.4':              [[25, 25, 25, 25], [20, 40, 25, 15]],
+    'RULES.ethiopiaGrindBonus': [0.2]
+  };
+  function dropOldDefaults(s, path) {
+    if (!s || typeof s !== 'object' || isTuneUnit(s)) return;
+    Object.keys(s).forEach(function (k) {
+      var p = path ? path + '.' + k : k;
+      var olds = OLD_DEFAULTS[p], v = JSON.stringify(s[k]);
+      if (olds && olds.some(function (o) { return JSON.stringify(o) === v; })) delete s[k];
+      else dropOldDefaults(s[k], p);
+    });
+  }
   function loadTuning() {
     try {
-      var raw = localStorage.getItem(TUNE_STORE);
-      if (raw) assignDeep(tuningModel(), migrateTuning(JSON.parse(raw)));
+      var raw = localStorage.getItem(TUNE_STORE), s = null;
+      if (raw != null) s = migrateTuning(JSON.parse(raw));
+      else if ((raw = localStorage.getItem(TUNE_STORE_V1)) != null) {
+        s = migrateTuning(JSON.parse(raw));
+        dropOldDefaults(s, '');
+      }
+      if (s) assignDeep(tuningModel(), s);
     } catch (e) {}
+    /* 初期値と同じになった値（画面3の調整を index.html に書き込んだ後など）を保存から外す。
+       残しておくと、次に初期値を変えたときにまた古い値で上書きされてしまう。 */
+    saveTuning();
+    try { localStorage.removeItem(TUNE_STORE_V1); } catch (e) {}
   }
   function resetTuning() {
     assignDeep(tuningModel(), JSON.parse(JSON.stringify(TUNING_DEFAULTS)));
-    try { localStorage.removeItem(TUNE_STORE); } catch (e) {}
+    try { localStorage.removeItem(TUNE_STORE); localStorage.removeItem(TUNE_STORE_V1); } catch (e) {}
   }
 
   /* --- 入力欄の定義 --- */
